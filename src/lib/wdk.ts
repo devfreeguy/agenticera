@@ -1,41 +1,27 @@
-import WDK from "@tetherto/wdk";
-import WalletManagerEvm, { WalletAccountReadOnlyEvm } from "@tetherto/wdk-wallet-evm";
-import { WdkSecretManager, wdkSaltGenerator } from "@tetherto/wdk-secret-manager";
-
-import { POLYGON_RPC_URL } from "@/constants/chains";
-import { USDT_CONTRACT_ADDRESS, USDT_DECIMALS } from "@/constants/contracts";
 import { prisma } from "@/lib/prisma";
-import { pollForPayment } from "@/lib/indexer";
 
-// ─── Encryption helpers ────────────────────────────────────────────────────────
+const WDK_SERVICE_URL = "http://localhost:3001";
 
-async function encryptSeedPhrase(seedPhrase: string): Promise<string> {
-  const salt = wdkSaltGenerator.generate();
-  const secretManager = new WdkSecretManager(process.env.AGENT_ENCRYPTION_KEY!, salt);
-  const entropy = secretManager.mnemonicToEntropy(seedPhrase);
-  const { encryptedEntropy } = await secretManager.generateAndEncrypt(entropy);
-  secretManager.dispose();
-  return `${salt.toString("hex")}:${encryptedEntropy.toString("hex")}`;
+function wdkHeaders(): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    "x-wdk-service-secret": process.env.WDK_SERVICE_SECRET!,
+  };
 }
 
-export async function decryptAgentSeed(encryptedSeed: string): Promise<string> {
-  try {
-    const [saltHex, entropyHex] = encryptedSeed.split(":");
-    if (!saltHex || !entropyHex) {
-      throw new Error("Invalid encrypted seed format");
-    }
-    const salt = Buffer.from(saltHex, "hex");
-    const encryptedEntropy = Buffer.from(entropyHex, "hex");
-    const secretManager = new WdkSecretManager(process.env.AGENT_ENCRYPTION_KEY!, salt);
-    const entropyBuffer = secretManager.decrypt(encryptedEntropy);
-    const seedPhrase = secretManager.entropyToMnemonic(entropyBuffer);
-    secretManager.dispose();
-    return seedPhrase;
-  } catch (error) {
-    throw new Error(
-      `decryptAgentSeed failed: ${error instanceof Error ? error.message : String(error)}`
-    );
+async function wdkFetch<T>(
+  path: string,
+  options?: RequestInit
+): Promise<T> {
+  const res = await fetch(`${WDK_SERVICE_URL}${path}`, {
+    ...options,
+    headers: { ...wdkHeaders(), ...(options?.headers ?? {}) },
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => res.statusText);
+    throw new Error(`WDK service error (${res.status}): ${body}`);
   }
+  return res.json() as Promise<T>;
 }
 
 // ─── Wallet creation ──────────────────────────────────────────────────────────
@@ -45,18 +31,9 @@ export async function createAgentWallet(): Promise<{
   encryptedSeed: string;
 }> {
   try {
-    const seedPhrase = WDK.getRandomSeedPhrase();
-    const wdk = new WDK(seedPhrase).registerWallet("polygon", WalletManagerEvm, {
-      provider: POLYGON_RPC_URL,
+    return await wdkFetch<{ address: string; encryptedSeed: string }>("/wallet/create", {
+      method: "POST",
     });
-
-    const account = await wdk.getAccount("polygon", 0);
-    const address = await account.getAddress();
-    account.dispose();
-    wdk.dispose();
-
-    const encryptedSeed = await encryptSeedPhrase(seedPhrase);
-    return { address, encryptedSeed };
   } catch (error) {
     throw new Error(
       `createAgentWallet failed: ${error instanceof Error ? error.message : String(error)}`
@@ -68,12 +45,10 @@ export async function createAgentWallet(): Promise<{
 
 export async function getAgentBalance(walletAddress: string): Promise<string> {
   try {
-    const readOnly = new WalletAccountReadOnlyEvm(walletAddress, {
-      provider: POLYGON_RPC_URL,
-    });
-    const balanceBigInt = await readOnly.getTokenBalance(USDT_CONTRACT_ADDRESS);
-    const balance = (Number(balanceBigInt) / 10 ** USDT_DECIMALS).toFixed(6);
-    return balance;
+    const data = await wdkFetch<{ balance: string; address: string }>(
+      `/wallet/balance/${walletAddress}`
+    );
+    return data.balance;
   } catch (error) {
     throw new Error(
       `getAgentBalance failed: ${error instanceof Error ? error.message : String(error)}`
@@ -94,24 +69,14 @@ export async function sendUsdt(
       select: { encryptedSeedPhrase: true },
     });
 
-    const seedPhrase = await decryptAgentSeed(agent.encryptedSeedPhrase);
-    const amountBaseUnits = BigInt(Math.round(parseFloat(amountUsdt) * 10 ** USDT_DECIMALS));
-
-    const wdk = new WDK(seedPhrase).registerWallet("polygon", WalletManagerEvm, {
-      provider: POLYGON_RPC_URL,
+    return await wdkFetch<{ txHash: string }>("/wallet/send", {
+      method: "POST",
+      body: JSON.stringify({
+        fromEncryptedSeed: agent.encryptedSeedPhrase,
+        toAddress,
+        amountUsdt,
+      }),
     });
-
-    const account = await wdk.getAccount("polygon", 0);
-    const result = await account.transfer({
-      token: USDT_CONTRACT_ADDRESS,
-      recipient: toAddress,
-      amount: amountBaseUnits,
-    });
-
-    account.dispose();
-    wdk.dispose();
-
-    return { txHash: result.hash };
   } catch (error) {
     throw new Error(
       `sendUsdt failed: ${error instanceof Error ? error.message : String(error)}`
@@ -127,14 +92,29 @@ export async function verifyPayment(
   afterTimestamp: number
 ): Promise<{ confirmed: boolean; txHash?: string }> {
   try {
-    const result = await pollForPayment(walletAddress, expectedAmountUsdt, afterTimestamp);
-    if (result) {
-      return { confirmed: true, txHash: result.txHash };
-    }
-    return { confirmed: false };
+    return await wdkFetch<{ confirmed: boolean; txHash?: string }>("/wallet/verify-payment", {
+      method: "POST",
+      body: JSON.stringify({ walletAddress, expectedAmountUsdt, afterTimestamp }),
+    });
   } catch (error) {
     throw new Error(
       `verifyPayment failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+// ─── Seed decryption (proxied to wdk-service) ─────────────────────────────────
+
+export async function decryptAgentSeed(encryptedSeed: string): Promise<string> {
+  try {
+    const data = await wdkFetch<{ seedPhrase: string }>("/wallet/decrypt", {
+      method: "POST",
+      body: JSON.stringify({ encryptedSeed }),
+    });
+    return data.seedPhrase;
+  } catch (error) {
+    throw new Error(
+      `decryptAgentSeed failed: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }

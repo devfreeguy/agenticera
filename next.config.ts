@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: [
+    "@tetherto/wdk",
+    "@tetherto/wdk-wallet-evm",
+    "@tetherto/wdk-secret-manager",
+    "sodium-native",
+  ],
 };
 
 export default nextConfig;
