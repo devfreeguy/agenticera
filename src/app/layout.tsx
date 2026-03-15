@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Syne, DM_Sans, IBM_Plex_Mono } from "next/font/google";
 import { Providers } from "@/app/providers";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import "./globals.css";
 
 const syne = Syne({
@@ -37,7 +38,11 @@ export default function RootLayout({
       className={`${syne.variable} ${dmSans.variable} ${ibmPlexMono.variable}`}
     >
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <ScrollArea className="h-screen">
+            {children}
+          </ScrollArea>
+        </Providers>
       </body>
     </html>
   );

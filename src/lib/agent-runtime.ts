@@ -83,7 +83,7 @@ export async function executeJob(
         ? `\n\nAvailable sub-agents you may delegate to:\n${subAgents
             .map(
               (a) =>
-                `- ID: ${a.id} | Name: ${a.name} | Categories: ${a.categories.join(", ")} | Price: ${a.pricePerTask.toString()} USDT`
+                `- ID: ${a.id} | Name: ${a.name} | Categories: ${a.categoryIds.join(", ")} | Price: ${a.pricePerTask.toString()} USDT`
             )
             .join("\n")}`
         : "\n\nNo sub-agents are currently available.";

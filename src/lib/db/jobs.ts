@@ -7,7 +7,7 @@ const agentPublicSelect = {
   name: true,
   systemPrompt: true,
   pricePerTask: true,
-  categories: true,
+  categoryIds: true,
   walletAddress: true,
   status: true,
   totalEarned: true,

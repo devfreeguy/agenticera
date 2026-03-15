@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/hooks/useUser";
 
 interface DeploySuccessStateProps {
   walletAddress: string;
@@ -12,6 +13,7 @@ interface DeploySuccessStateProps {
 export function DeploySuccessState({ walletAddress }: DeploySuccessStateProps) {
   const [revealed, setRevealed] = useState("");
   const router = useRouter();
+  const { address, markOnboarded } = useUser();
 
   useEffect(() => {
     setRevealed("");
@@ -56,7 +58,10 @@ export function DeploySuccessState({ walletAddress }: DeploySuccessStateProps) {
         variant="primary"
         size="md"
         className="w-full mt-2"
-        onClick={() => router.push("/dashboard")}
+        onClick={async () => {
+          if (address) await markOnboarded(address);
+          router.push("/dashboard");
+        }}
       >
         Go to dashboard
       </Button>

@@ -14,6 +14,7 @@ interface UserActions {
   clearUser: () => void;
   syncUser: (walletAddress: string) => Promise<void>;
   fetchUser: (walletAddress: string) => Promise<void>;
+  markOnboarded: (walletAddress: string) => Promise<void>;
 }
 
 export const useUserStore = create<UserState & UserActions>()(
@@ -77,6 +78,19 @@ export const useUserStore = create<UserState & UserActions>()(
         set((state) => {
           state.isLoading = false;
         });
+      }
+    },
+
+    markOnboarded: async (walletAddress) => {
+      try {
+        const res = await axios.post<{ data: WalletUser }>("/api/users/onboarded", {
+          walletAddress,
+        });
+        set((state) => {
+          state.user = res.data.data;
+        });
+      } catch (err) {
+        console.error("[userStore] markOnboarded failed:", err);
       }
     },
   }))

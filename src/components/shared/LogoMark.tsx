@@ -2,8 +2,8 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface LogoMarkProps {
-  /** "default" = logo.png (orange bg, for use on dark surfaces as a brand icon)
-   *  "dark"    = logo-dark.png (dark bg, for use as a centered logomark on cards) */
+  /** "default" = logo.webp (orange bg, for use on dark surfaces as a brand icon)
+   *  "dark"    = logo-dark.webp (dark bg, for use as a centered logomark on cards) */
   variant?: "default" | "dark";
   size?: number;
   className?: string;
@@ -16,8 +16,8 @@ export function LogoMark({
 }: LogoMarkProps) {
   const src =
     variant === "dark"
-      ? "/assets/app/logo-dark.png"
-      : "/assets/app/logo.png";
+      ? "/assets/app/logo-dark.webp"
+      : "/assets/app/logo.webp";
 
   return (
     <Image

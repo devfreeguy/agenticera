@@ -5,6 +5,7 @@ import { Briefcase, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@/hooks/useUser";
 
 interface ClientDoneStepProps {
   onBack: () => void;
@@ -13,6 +14,7 @@ interface ClientDoneStepProps {
 
 export function ClientDoneStep({ onBack, walletAddress }: ClientDoneStepProps) {
   const router = useRouter();
+  const { markOnboarded } = useUser();
 
   useEffect(() => {
     axios
@@ -39,7 +41,10 @@ export function ClientDoneStep({ onBack, walletAddress }: ClientDoneStepProps) {
           variant="primary"
           size="md"
           className="w-full"
-          onClick={() => router.push("/jobs")}
+          onClick={async () => {
+            await markOnboarded(walletAddress);
+            router.push("/jobs");
+          }}
         >
           Browse the job board
         </Button>

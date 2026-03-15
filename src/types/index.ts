@@ -63,4 +63,5 @@ export type WalletUser = {
   id: string;
   walletAddress: string;
   role: Role;
+  onboarded: boolean;
 };

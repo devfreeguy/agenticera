@@ -3,8 +3,11 @@ import { useAccount } from "wagmi";
 import { useUserStore } from "@/store/userStore";
 
 export function useUser() {
-  const { address, isConnected } = useAccount();
-  const { user, isLoading, hydrated, clearUser, syncUser, fetchUser } = useUserStore();
+  const { address, isConnected, status } = useAccount();
+  const { user, isLoading, hydrated, clearUser, syncUser, fetchUser, markOnboarded } = useUserStore();
+
+  // True once wagmi has finished reconnecting — safe to act on isConnected
+  const isHydrated = status !== "connecting" && status !== "reconnecting";
 
   useEffect(() => {
     if (isConnected && address && !user) {
@@ -12,5 +15,5 @@ export function useUser() {
     }
   }, [isConnected, address, user, fetchUser]);
 
-  return { user, isLoading, hydrated, isConnected, address, syncUser, clearUser };
+  return { user, isLoading, hydrated, isConnected, isHydrated, address, syncUser, clearUser, markOnboarded };
 }

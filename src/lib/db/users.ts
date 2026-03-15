@@ -5,6 +5,7 @@ const userSelect = {
   id: true,
   walletAddress: true,
   role: true,
+  onboarded: true,
 } as const;
 
 export async function getUserByWallet(walletAddress: string) {
@@ -58,6 +59,20 @@ export async function updateUserRole(id: string, role: Role) {
   } catch (error) {
     throw new Error(
       `updateUserRole failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
+export async function markUserOnboarded(id: string) {
+  try {
+    return await prisma.user.update({
+      where: { id },
+      data: { onboarded: true },
+      select: userSelect,
+    });
+  } catch (error) {
+    throw new Error(
+      `markUserOnboarded failed: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }

@@ -14,24 +14,32 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useUser } from "@/hooks/useUser";
 import { PublicFooter } from "@/components/landing/PublicFooter";
 
 export default function AuthPage() {
-  const { isConnected } = useAccount();
+  const { isConnected, isHydrated, user, hydrated, syncUser, address } = useUser();
   const router = useRouter();
   const [faqOpen, setFaqOpen] = useState(false);
 
-  useCurrentUser();
-
+  // Sync user on connect, then redirect based on onboarded flag
   useEffect(() => {
-    if (isConnected) {
-      router.replace("/onboarding");
+    if (!isConnected || !address) return;
+    if (!user) {
+      syncUser(address);
+      return;
     }
-  }, [isConnected, router]);
+    if (hydrated || user) {
+      if (user.onboarded) {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/onboarding");
+      }
+    }
+  }, [isConnected, address, user, hydrated, syncUser, router]);
 
-  // Already connected — render nothing while redirecting
-  if (isConnected) return null;
+  // Render nothing while wagmi is rehydrating or already connected (redirect in progress)
+  if (!isHydrated || isConnected) return null;
 
   return (
     <div className="relative min-h-screen bg-background flex flex-col">
@@ -107,22 +115,42 @@ export default function AuthPage() {
 
             {/* RainbowKit ConnectButton — custom styled */}
             <ConnectButton.Custom>
-              {({ openConnectModal, mounted }) => (
-                <button
-                  onClick={openConnectModal}
-                  disabled={!mounted}
-                  className={cn(
-                    "w-full py-3.5 bg-(--orange) text-white border-none rounded-[11px]",
-                    "font-head text-[15px] font-semibold tracking-[0.01em]",
-                    "flex items-center justify-center gap-2.5 mb-4",
-                    "hover:opacity-90 active:scale-[0.99] transition-all duration-150",
-                    "disabled:opacity-50 disabled:pointer-events-none",
-                  )}
-                >
-                  <Wallet size={18} />
-                  Connect wallet
-                </button>
-              )}
+              {({ account, openAccountModal, openConnectModal, mounted }) => {
+                if (!mounted) return null;
+
+                if (account) {
+                  // Already connected — page is redirecting; show address pill
+                  return (
+                    <button
+                      onClick={openAccountModal}
+                      className={cn(
+                        "w-full py-3 border border-border rounded-[11px]",
+                        "flex items-center justify-center gap-2 mb-4",
+                        "text-[14px] text-foreground bg-card",
+                        "hover:bg-secondary transition-colors duration-150",
+                      )}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-(--green) shrink-0" />
+                      {account.displayName ?? account.address}
+                    </button>
+                  );
+                }
+
+                return (
+                  <button
+                    onClick={openConnectModal}
+                    className={cn(
+                      "w-full py-3.5 bg-(--orange) text-white border-none rounded-[11px]",
+                      "font-head text-[15px] font-semibold tracking-[0.01em]",
+                      "flex items-center justify-center gap-2.5 mb-4",
+                      "hover:opacity-90 active:scale-[0.99] transition-all duration-150",
+                    )}
+                  >
+                    <Wallet size={18} />
+                    Connect wallet
+                  </button>
+                );
+              }}
             </ConnectButton.Custom>
 
             {/* Separator */}

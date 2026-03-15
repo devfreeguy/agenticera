@@ -3,14 +3,59 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { cn } from "@/lib/utils";
 import { LogoMark } from "@/components/shared/LogoMark";
+import { formatAddress } from "@/utils/format";
 
 const navLinks = [
   { label: "How it works", href: "/#how-it-works" },
   { label: "Job board", href: "/jobs" },
   { label: "Docs", href: "/docs" },
 ];
+
+function WalletButton({ className }: { className?: string }) {
+  return (
+    <ConnectButton.Custom>
+      {({ account, openAccountModal, openConnectModal, mounted }) => {
+        if (!mounted) return null;
+
+        if (account) {
+          return (
+            <div className={cn("flex items-center gap-2", className)}>
+              <Link
+                href="/dashboard"
+                className="bg-(--orange) text-foreground text-[13px] font-medium rounded-[8px] px-4 py-2.25 hover:opacity-90 transition-opacity duration-150"
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={openAccountModal}
+                className="flex items-center gap-1.5 bg-card border border-border rounded-full px-3 py-1.5 text-[13px] text-foreground hover:border-border/80 transition-colors duration-150"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-(--green) shrink-0" />
+                {formatAddress(account.address)}
+              </button>
+            </div>
+          );
+        }
+
+        return (
+          <button
+            onClick={openConnectModal}
+            className={cn(
+              "bg-(--orange) text-foreground text-[13px] font-medium rounded-[8px] px-5 py-2.25",
+              "hover:opacity-90 transition-opacity duration-150",
+              className
+            )}
+          >
+            Connect Wallet
+          </button>
+        );
+      }}
+    </ConnectButton.Custom>
+  );
+}
 
 export function Navbar({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
@@ -47,12 +92,7 @@ export function Navbar({ className }: { className?: string }) {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          <Link
-            href="/connect"
-            className="hidden md:block bg-(--orange) text-foreground text-[13px] font-medium rounded-[8px] px-5 py-2.25 hover:opacity-90 transition-opacity duration-150"
-          >
-            Connect Wallet
-          </Link>
+          <WalletButton className="hidden md:flex" />
           <button
             className="md:hidden text-muted-foreground hover:text-foreground transition-colors"
             onClick={() => setOpen((v) => !v)}
@@ -76,13 +116,9 @@ export function Navbar({ className }: { className?: string }) {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="/connect"
-            onClick={() => setOpen(false)}
-            className="mt-2 w-full block text-center bg-(--orange) text-foreground text-[13px] font-medium rounded-[8px] px-5 py-2.25 hover:opacity-90 transition-opacity duration-150"
-          >
-            Connect Wallet
-          </Link>
+          <div className="mt-2 flex flex-col gap-2" onClick={() => setOpen(false)}>
+            <WalletButton className="w-full justify-center" />
+          </div>
         </div>
       )}
     </nav>
