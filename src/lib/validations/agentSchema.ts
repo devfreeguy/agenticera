@@ -15,6 +15,16 @@ export const updateAgentStatusSchema = z.object({
   status: z.enum(["ACTIVE", "PAUSED"]),
 });
 
+export const updateAgentSettingsSchema = z
+  .object({
+    status: z.enum(["ACTIVE", "PAUSED"]).optional(),
+    systemPrompt: z.string().min(1).max(4000).optional(),
+    pricePerTask: z.coerce.number().positive().optional(),
+  })
+  .refine((obj) => Object.keys(obj).some((k) => obj[k as keyof typeof obj] !== undefined), {
+    message: "At least one field is required",
+  });
+
 export const withdrawSchema = z.object({
   toAddress: z
     .string()

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAgentById, updateAgentStatus } from "@/lib/db/agents";
-import { updateAgentStatusSchema } from "@/lib/validations/agentSchema";
+import { getAgentById, updateAgentSettings } from "@/lib/db/agents";
+import { updateAgentSettingsSchema } from "@/lib/validations/agentSchema";
 import { AgentStatus } from "@/generated/prisma/enums";
 import { serializeAgent } from "@/utils/serialize";
 import type { AgentPublic, ApiError, ApiSuccess } from "@/types/index";
@@ -38,16 +38,22 @@ export async function PATCH(
     return NextResponse.json<ApiError>({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = updateAgentStatusSchema.safeParse(body);
+  const parsed = updateAgentSettingsSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json<ApiError>(
-      { error: parsed.error.issues[0]?.message ?? "Invalid status" },
+      { error: parsed.error.issues[0]?.message ?? "Invalid fields" },
       { status: 400 }
     );
   }
 
   try {
-    const agent = await updateAgentStatus(id, parsed.data.status as AgentStatus);
+    const updates: { status?: AgentStatus; systemPrompt?: string; pricePerTask?: string } = {};
+    if (parsed.data.status) updates.status = parsed.data.status as AgentStatus;
+    if (parsed.data.systemPrompt) updates.systemPrompt = parsed.data.systemPrompt;
+    if (parsed.data.pricePerTask !== undefined)
+      updates.pricePerTask = parsed.data.pricePerTask.toString();
+
+    const agent = await updateAgentSettings(id, updates);
     return NextResponse.json<ApiSuccess<AgentPublic>>({ data: serializeAgent(agent) });
   } catch (error) {
     return NextResponse.json<ApiError>(

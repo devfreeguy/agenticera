@@ -6,6 +6,7 @@ const userSelect = {
   walletAddress: true,
   role: true,
   onboarded: true,
+  createdAt: true,
 } as const;
 
 export async function getUserByWallet(walletAddress: string) {

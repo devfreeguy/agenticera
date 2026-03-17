@@ -37,7 +37,7 @@ export function DashboardTopbar({ role, walletAddress }: DashboardTopbarProps) {
   const avatarLabel = walletAddress ? walletAddress.slice(2, 4).toUpperCase() : "?";
 
   return (
-    <div className="flex items-center justify-between px-[26px] py-4 border-b border-border sticky top-0 z-10 bg-background flex-wrap gap-2.5">
+    <div className="flex items-center justify-between px-6.5 py-4 border-b border-border sticky top-0 z-10 bg-background flex-wrap gap-2.5">
       <div className="flex flex-col gap-1">
         <h1 className="font-head text-[20px] font-bold">Dashboard</h1>
         <div className="flex gap-1.5 flex-wrap">

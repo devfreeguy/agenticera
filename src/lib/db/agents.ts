@@ -120,6 +120,23 @@ export async function updateAgentStatus(id: string, status: AgentStatus) {
   }
 }
 
+export async function updateAgentSettings(
+  id: string,
+  data: { status?: AgentStatus; systemPrompt?: string; pricePerTask?: string }
+) {
+  try {
+    return await prisma.agent.update({
+      where: { id },
+      data,
+      select: agentPublicSelect,
+    });
+  } catch (error) {
+    throw new Error(
+      `updateAgentSettings failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
 export async function incrementAgentEarnings(id: string, amountUsdt: string) {
   try {
     return await prisma.agent.update({

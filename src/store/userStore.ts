@@ -15,6 +15,7 @@ interface UserActions {
   syncUser: (walletAddress: string) => Promise<void>;
   fetchUser: (walletAddress: string) => Promise<void>;
   markOnboarded: (walletAddress: string) => Promise<void>;
+  updateRole: (walletAddress: string, role: string) => Promise<void>;
 }
 
 export const useUserStore = create<UserState & UserActions>()(
@@ -97,6 +98,22 @@ export const useUserStore = create<UserState & UserActions>()(
         }
       } catch (err) {
         console.error("[userStore] markOnboarded failed:", err);
+      }
+    },
+
+    updateRole: async (walletAddress, role) => {
+      try {
+        const res = await axiosClient.patch<{ data: WalletUser }>(
+          `/api/users/me?walletAddress=${walletAddress}`,
+          { role }
+        );
+        if (res.data?.data) {
+          set((state) => {
+            state.user = res.data.data;
+          });
+        }
+      } catch (err) {
+        console.error("[userStore] updateRole failed:", err);
       }
     },
   }))
