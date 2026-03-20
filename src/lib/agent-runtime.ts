@@ -73,8 +73,7 @@ async function getAdminClient() {
 
 export async function executeOnChainRefund(onChainJobId: number) {
   const client = await getAdminClient();
-  const contractAddress = process.env
-    .NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS as `0x${string}`;
+  const contractAddress = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "") as `0x${string}`;
   const { request } = await client.simulateContract({
     address: contractAddress,
     abi: ESCROW_ABI,
@@ -88,8 +87,7 @@ export async function executeOnChainRefund(onChainJobId: number) {
 
 export async function executeOnChainPayout(onChainJobId: number) {
   const client = await getAdminClient();
-  const contractAddress = process.env
-    .NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS as `0x${string}`;
+  const contractAddress = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "") as `0x${string}`;
   const { request } = await client.simulateContract({
     address: contractAddress,
     abi: ESCROW_ABI,

@@ -88,6 +88,8 @@ export function HireFlow({
     Math.round(parseFloat(agent.pricePerTask) * 10 ** USDT_DECIMALS),
   );
 
+  const escrowReady = !!AGENT_ESCROW_ADDRESS;
+
   const { data: allowanceData, refetch: refetchAllowance } = useReadContract({
     address: USDT_CONTRACT_ADDRESS as `0x${string}`,
     abi: USDT_ABI,
@@ -99,7 +101,7 @@ export function HireFlow({
     ],
     chainId: base.id,
     query: {
-      enabled: !!user?.walletAddress,
+      enabled: !!user?.walletAddress && escrowReady,
     },
   });
 
@@ -197,6 +199,10 @@ export function HireFlow({
   async function handlePayWithWallet() {
     if (!user) {
       router.push("/connect");
+      return;
+    }
+    if (!escrowReady) {
+      setError("Contract not deployed yet. Check back soon.");
       return;
     }
     resetWrite();

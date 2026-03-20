@@ -2,10 +2,8 @@ export const USDT_CONTRACT_ADDRESS = "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2
 export const USDT_DECIMALS = 6;
 export const USDT_SYMBOL = "USDT";
 
-// AgentEscrow — Base mainnet (set after deployment)
-export const AGENT_ESCROW_ADDRESS = (
-  process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS ?? ""
-) as `0x${string}`;
+// AgentEscrow — Base mainnet
+export const AGENT_ESCROW_ADDRESS = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "") as `0x${string}`;
 
 export const AGENT_ESCROW_ABI = [
   // createJob — pulls USDT into escrow, returns jobId (NOT payable — no ETH forwarding)

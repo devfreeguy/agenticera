@@ -19,8 +19,7 @@ export async function POST(req: Request) {
     if (!isFakeTxHash) {
       // 1. Read the latest Job ID from the Smart Contract
       const client = createPublicClient({ chain: base, transport: http(rpcUrl) });
-      const contractAddress = process.env
-        .NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS as `0x${string}`;
+      const contractAddress = (process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "") as `0x${string}`;
 
       const latestOnChainId = await client.readContract({
         address: contractAddress,
