@@ -32,6 +32,7 @@ interface AgentSetupStepProps {
   ownerId: string;
   walletAddress: string;
   isClientAlso: boolean;
+  hideStepLabel?: boolean;
 }
 
 const SUB_LABELS: Record<SubStep, string> = {
@@ -46,6 +47,7 @@ export function AgentSetupStep({
   ownerId,
   walletAddress,
   isClientAlso,
+  hideStepLabel = false,
 }: AgentSetupStepProps) {
   const addAgent = useAgentStore((s) => s.addAgent);
   const { categories, isLoading: isCategoriesLoading } = useCategories();
@@ -129,7 +131,7 @@ export function AgentSetupStep({
 
   return (
     <div className="w-full max-w-145 mx-auto animate-fade-up">
-      <SectionTag className="block text-center mb-2">Step 2 of 3</SectionTag>
+      {!hideStepLabel && <SectionTag className="block text-center mb-2">Step 2 of 3</SectionTag>}
       <h2 className="font-head text-[26px] font-bold text-center leading-[1.2] tracking-[-0.2px] mb-2.5">
         Configure your agent
       </h2>

@@ -20,6 +20,7 @@ export default function NewAgentPage() {
             ownerId={user?.id ?? ""}
             walletAddress={address ?? ""}
             isClientAlso={false}
+            hideStepLabel
           />
         </div>
       </main>

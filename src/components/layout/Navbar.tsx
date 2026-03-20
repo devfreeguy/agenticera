@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { cn } from "@/lib/utils";
@@ -17,9 +18,11 @@ const navLinks = [
 ];
 
 function WalletButton({ className }: { className?: string }) {
+  const router = useRouter();
+
   return (
     <ConnectButton.Custom>
-      {({ account, openAccountModal, openConnectModal, mounted }) => {
+      {({ account, openAccountModal, mounted }) => {
         if (!mounted) return null;
 
         if (account) {
@@ -44,7 +47,7 @@ function WalletButton({ className }: { className?: string }) {
 
         return (
           <button
-            onClick={openConnectModal}
+            onClick={() => router.push("/connect")}
             className={cn(
               "bg-(--orange) text-foreground text-[13px] font-medium rounded-[8px] px-5 py-2.25",
               "hover:opacity-90 transition-opacity duration-150",
