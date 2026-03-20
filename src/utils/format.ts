@@ -20,12 +20,12 @@ export function formatTxHash(hash: string): string {
   return `${hash.slice(0, 8)}...${hash.slice(-6)}`;
 }
 
-export function polygonscanTxUrl(hash: string): string {
-  return `https://polygonscan.com/tx/${hash}`;
+export function getExplorerTxUrl(hash: string): string {
+  return `https://basescan.org/tx/${hash}`;
 }
-
-export function polygonscanAddressUrl(address: string): string {
-  return `https://polygonscan.com/address/${address}`;
+ 
+export function getExplorerAddressUrl(address: string): string {
+  return `https://basescan.org/address/${address}`;
 }
 
 export function formatRelativeTime(date: Date | string): string {

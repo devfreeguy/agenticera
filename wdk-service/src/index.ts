@@ -1,8 +1,8 @@
 import path from "path";
 import dotenv from "dotenv";
 
-// Load .env.local from the project root (two levels up from wdk-service/src/)
-dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
+// Load .env from the project root (two levels up from wdk-service/src/)
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 import express from "express";
 import cors from "cors";
@@ -14,9 +14,11 @@ const PORT = process.env.WDK_SERVICE_PORT ?? 3001;
 
 app.use(express.json());
 
+const allowedOrigin = process.env.ALLOWED_ORIGIN ?? /^http:\/\/localhost/;
+
 app.use(
   cors({
-    origin: /^http:\/\/localhost/,
+    origin: allowedOrigin,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "x-wdk-service-secret"],
   })

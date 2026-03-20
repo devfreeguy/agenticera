@@ -46,7 +46,7 @@ export async function POST(
       console.log("[check-payment] already confirmed, status:", job.status);
       return NextResponse.json<ApiSuccess<CheckPaymentResponse>>({
         data: {
-          confirmed: job.status !== JobStatus.PENDING_PAYMENT,
+          confirmed: job.status !== JobStatus.PENDING,
           status: job.status,
           ...(job.txHash ? { txHash: job.txHash } : {}),
         },
@@ -83,7 +83,7 @@ export async function POST(
       });
     }
 
-    // status is PENDING_PAYMENT — poll indexer for incoming transfer
+    // status is PENDING — poll indexer for incoming transfer
     console.log("[check-payment] polling indexer...");
     const afterTimestamp = Math.floor(job.createdAt.getTime() / 1000);
     const priceUsdt = job.priceUsdt.toString();
@@ -93,7 +93,7 @@ export async function POST(
     if (!result) {
       console.log("[check-payment] payment not yet confirmed");
       return NextResponse.json<ApiSuccess<CheckPaymentResponse>>({
-        data: { confirmed: false, status: JobStatus.PENDING_PAYMENT },
+        data: { confirmed: false, status: JobStatus.PENDING },
       });
     }
 

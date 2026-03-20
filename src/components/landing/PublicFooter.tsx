@@ -8,7 +8,7 @@ const footLinks = [
 export function PublicFooter() {
   return (
     <footer className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 sm:px-12 py-5.5 border-t border-border text-[12px] text-(--hint)">
-      <span>© {new Date().getFullYear()} AgentBank</span>
+      <span>© {new Date().getFullYear()} AgentEra</span>
       <div className="flex gap-6">
         {footLinks.map((l) => (
           <a

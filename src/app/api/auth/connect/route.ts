@@ -31,7 +31,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiSuccess<Wa
   }
 
   // Build the SIWE message the frontend signed
-  const message = `AgentBank wants you to sign in with your Ethereum account:\n${walletAddress}\n\nNonce: ${nonce}`;
+  const message = `AgentEra wants you to sign in with your Ethereum account:\n${walletAddress}\n\nNonce: ${nonce}`;
 
   // Verify the signature
   let isValid = false;
@@ -54,6 +54,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiSuccess<Wa
     await setSessionCookie(user.walletAddress);
     return NextResponse.json<ApiSuccess<WalletUser>>({ data: user });
   } catch (error) {
+    console.error("[POST /api/auth/connect] Failed to upsert user or set session:", error instanceof Error ? error.message : error);
     return NextResponse.json<ApiError>(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

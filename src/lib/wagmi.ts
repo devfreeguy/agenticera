@@ -1,13 +1,13 @@
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { polygon } from "wagmi/chains";
+import { base } from "wagmi/chains";
 import { http } from "wagmi";
 
 export const wagmiConfig = getDefaultConfig({
-  appName: "AgentBank",
+  appName: "AgentEra",
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? "",
-  chains: [polygon],
+  chains: [base],
   transports: {
-    [polygon.id]: http(process.env.NEXT_PUBLIC_POLYGON_RPC ?? "https://polygon-rpc.com"),
+    [base.id]: http(process.env.NEXT_PUBLIC_BASE_RPC),
   },
   ssr: true,
 });

@@ -11,12 +11,16 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { address, isConnected, isHydrated } = useUser(); // isHydrated kept for redirect guard
+  const { address, isConnected, isHydrated, hydrated } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (isHydrated && !isConnected) router.replace("/connect");
-  }, [isHydrated, isConnected, router]);
+    // Both wagmi (isHydrated) AND our session store (hydrated) must be ready
+    // before we decide to boot the user to /connect.
+    if (isHydrated && hydrated && !isConnected) {
+      router.replace("/connect");
+    }
+  }, [isHydrated, hydrated, isConnected, router]);
 
   if (!isConnected) return null;
 

@@ -1,5 +1,5 @@
 const INDEXER_BASE_URL = "https://wdk-api.tether.io";
-const BLOCKCHAIN = "polygon";
+const BLOCKCHAIN = "base";
 const TOKEN = "usdt";
 
 const POLL_INTERVAL_MS = 5_000;

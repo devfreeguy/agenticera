@@ -14,6 +14,9 @@ interface AgentSlideOverProps {
   user: WalletUser | null;
   onJobAdded: (job: JobWithRelations) => void;
   showToast: (msg: string) => void;
+  initialStep?: HireStep;
+  initialJobId?: string;
+  initialTaskDescription?: string;
 }
 
 const STEP_LABELS: Record<HireStep, string> = {
@@ -43,13 +46,15 @@ export function AgentSlideOver({
   user,
   onJobAdded,
   showToast,
+  initialStep,
+  initialJobId,
+  initialTaskDescription,
 }: AgentSlideOverProps) {
-  const [step, setStep] = useState<HireStep>("detail");
+  const [step, setStep] = useState<HireStep>(initialStep || "detail");
 
-  // Reset to detail whenever a new agent is selected
   useEffect(() => {
-    setStep("detail");
-  }, [agent?.id]);
+    setStep(initialStep || "detail");
+  }, [agent?.id, initialStep]);
 
   // Reset when closed — but not mid-job (let it run in background)
   useEffect(() => {
@@ -63,7 +68,13 @@ export function AgentSlideOver({
 
   return (
     <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <SheetContent side="right" className="flex flex-col z-101">
+      <SheetContent
+        side="right"
+        className="flex flex-col z-101"
+        onInteractOutside={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
           {/* Step dots */}
@@ -108,6 +119,8 @@ export function AgentSlideOver({
             onClose={onClose}
             onJobAdded={onJobAdded}
             showToast={showToast}
+            initialJobId={initialJobId}
+            initialTaskDescription={initialTaskDescription}
           />
         )}
       </SheetContent>

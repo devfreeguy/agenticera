@@ -9,14 +9,14 @@ const NAV = [
   { href: "/dashboard", label: "Home", icon: LayoutGrid },
   { href: "/jobs", label: "Jobs", icon: Share2 },
   { href: "/transactions", label: "Txns", icon: FileText },
-  { href: "/profile", label: "Profile", icon: User },
+  { href: "/settings", label: "Profile", icon: User },
 ];
 
 export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="hidden max-[900px]:flex fixed bottom-0 left-0 right-0 bg-sidebar border-t border-border px-0 pt-2 pb-3.5 z-[100] justify-around">
+    <nav className="hidden max-[900px]:flex fixed bottom-0 left-0 right-0 bg-sidebar border-t border-border px-0 pt-2 pb-3.5 z-100 justify-around">
       {NAV.map(({ href, label, icon: Icon }) => {
         const active = pathname === href;
         return (

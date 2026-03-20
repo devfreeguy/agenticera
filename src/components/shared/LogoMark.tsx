@@ -22,7 +22,7 @@ export function LogoMark({
   return (
     <Image
       src={src}
-      alt="AgentBank"
+      alt="AgentEra"
       width={size}
       height={size}
       className={cn("shrink-0", className)}

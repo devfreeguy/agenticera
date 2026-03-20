@@ -1,7 +1,7 @@
-# AgentBank — Master Project Rules
+# AgentEra — Master Project Rules
 
 ## What this project is
-AgentBank is a Next.js 14 App Router web app where AI agents hold self-custodial USDT wallets powered by Tether's WDK. Agents earn USDT by completing tasks, pay their own operational costs, and hire other agents autonomously on Polygon mainnet.
+AgentEra is a Next.js 14 App Router web app where AI agents hold self-custodial USDT wallets powered by Tether's WDK. Agents earn USDT by completing tasks, pay their own operational costs, and hire other agents autonomously on Polygon mainnet.
 
 ## Supplementary skill files
 Always read the relevant skill file before working on a specific area:

@@ -1,6 +1,7 @@
 import Groq from "groq-sdk";
 
-export const AGENT_MODEL = "llama-3.3-70b-versatile";
+export const AGENT_MODEL = "llama-3.1-8b-instant";
+// export const AGENT_MODEL = "llama-3.3-70b-versatile";
 export const MAX_TOKENS = 2048;
 
 const groq = new Groq({
@@ -15,7 +16,13 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 function isRetryable(error: unknown): boolean {
   if (error instanceof Error) {
     const msg = error.message.toLowerCase();
-    if (msg.includes("econnreset") || msg.includes("econnrefused") || msg.includes("etimedout") || msg.includes("network")) return true;
+    if (
+      msg.includes("econnreset") ||
+      msg.includes("econnrefused") ||
+      msg.includes("etimedout") ||
+      msg.includes("network")
+    )
+      return true;
   }
   const status = (error as { status?: number })?.status;
   return status === 503 || status === 429;
@@ -24,7 +31,7 @@ function isRetryable(error: unknown): boolean {
 export async function runAgentTask(
   systemPrompt: string,
   taskDescription: string,
-  format: "markdown" | "json" = "markdown"
+  format: "markdown" | "json" = "markdown",
 ): Promise<{ output: string; promptTokens: number; completionTokens: number }> {
   const resolvedPrompt =
     format === "markdown" ? systemPrompt + MARKDOWN_INSTRUCTION : systemPrompt;
@@ -41,6 +48,9 @@ export async function runAgentTask(
           { role: "system", content: resolvedPrompt },
           { role: "user", content: taskDescription },
         ],
+        ...(format === "json"
+          ? { response_format: { type: "json_object" } }
+          : {}),
       });
 
       const choice = completion.choices[0];
@@ -51,7 +61,9 @@ export async function runAgentTask(
       const usage = {
         prompt: completion.usage?.prompt_tokens ?? 0,
         completion: completion.usage?.completion_tokens ?? 0,
-        total: (completion.usage?.prompt_tokens ?? 0) + (completion.usage?.completion_tokens ?? 0),
+        total:
+          (completion.usage?.prompt_tokens ?? 0) +
+          (completion.usage?.completion_tokens ?? 0),
       };
       console.log("[groq] success, tokens:", usage);
 
@@ -62,7 +74,10 @@ export async function runAgentTask(
       };
     } catch (error) {
       lastError = error;
-      console.error(`[groq] attempt ${attempt} failed:`, error instanceof Error ? error.message : String(error));
+      console.error(
+        `[groq] attempt ${attempt} failed:`,
+        error instanceof Error ? error.message : String(error),
+      );
       if (attempt < 3 && isRetryable(error)) {
         await sleep(2000);
         continue;
@@ -73,6 +88,6 @@ export async function runAgentTask(
 
   console.error("[groq] all retries exhausted");
   throw new Error(
-    `Groq task failed: ${lastError instanceof Error ? lastError.message : String(lastError)}`
+    `Groq task failed: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
   );
 }

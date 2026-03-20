@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:dorahacks.io)",
+      "WebSearch",
+      "WebFetch(domain:chainwire.org)",
+      "WebFetch(domain:blockchain.news)"
+    ]
+  }
+}

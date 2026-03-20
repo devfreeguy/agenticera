@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Share2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { JobCard } from "@/components/dashboard/JobCard";
+import { AgentSlideOver } from "@/components/jobs/AgentSlideOver";
 import { useJobs } from "@/hooks/useJobs";
 import { useJobStore } from "@/store/jobStore";
+import { useUser } from "@/hooks/useUser";
+import type { JobWithRelations } from "@/types/index";
 
 interface JobsPanelProps {
   walletAddress: string;
@@ -16,6 +19,8 @@ interface JobsPanelProps {
 export function JobsPanel({ walletAddress }: JobsPanelProps) {
   const { myJobs, isLoadingJobs, fetchMyJobs } = useJobs();
   const { newlyDeliveredIds, markJobViewed } = useJobStore();
+  const { user } = useUser();
+  const [resumeJob, setResumeJob] = useState<JobWithRelations | null>(null);
 
   useEffect(() => {
     if (walletAddress) fetchMyJobs(walletAddress);
@@ -95,9 +100,22 @@ export function JobsPanel({ walletAddress }: JobsPanelProps) {
             job={job}
             isNew={newlyDeliveredIds.includes(job.id)}
             onViewed={() => markJobViewed(job.id)}
+            onResumeFlow={() => setResumeJob(job)}
           />
         ))}
       </div>
+
+      <AgentSlideOver
+        agent={resumeJob?.agent || null}
+        open={!!resumeJob}
+        onClose={() => setResumeJob(null)}
+        user={user}
+        onJobAdded={() => {}}
+        showToast={(msg) => console.log(msg)}
+        initialStep="review"
+        initialJobId={resumeJob?.id}
+        initialTaskDescription={resumeJob?.taskDescription}
+      />
     </div>
   );
 }

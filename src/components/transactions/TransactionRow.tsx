@@ -2,7 +2,7 @@
 
 import { ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatRelativeTime, formatTxHash, polygonscanTxUrl } from "@/utils/format";
+import { formatRelativeTime, formatTxHash, getExplorerTxUrl } from "@/utils/format";
 import { TransactionDetail } from "@/components/transactions/TransactionDetail";
 import type { SerializedTransaction } from "@/utils/serialize";
 
@@ -151,7 +151,7 @@ export function TransactionRow({
         <div className="hidden min-[900px]:block w-[120px] flex-shrink-0 pl-3.5">
           {transaction.txHash ? (
             <a
-              href={polygonscanTxUrl(transaction.txHash)}
+              href={getExplorerTxUrl(transaction.txHash)}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}

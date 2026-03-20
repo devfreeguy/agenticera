@@ -25,6 +25,7 @@ export async function POST(
     const updated = await markUserOnboarded(user.id);
     return NextResponse.json<ApiSuccess<WalletUser>>({ data: updated });
   } catch (error) {
+    console.error("[POST /api/users/onboarded] Failed to mark user onboarded:", walletAddress, error instanceof Error ? error.message : error);
     return NextResponse.json<ApiError>(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

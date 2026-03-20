@@ -1,4 +1,4 @@
-# AgentBank — Database Rules (Prisma 7 + NeonDB)
+# AgentEra — Database Rules (Prisma 7 + NeonDB)
 
 ## Stack
 - Prisma 7 with @prisma/adapter-pg + pg driver

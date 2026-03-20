@@ -48,7 +48,7 @@ export function RoleSelectStep({ onContinue }: RoleSelectStepProps) {
     <div className="w-full max-w-145 mx-auto animate-fade-up">
       <SectionTag className="block text-center mb-2">Step 1 of 3</SectionTag>
       <h2 className="font-head text-[26px] font-bold text-center leading-[1.2] tracking-[-0.2px] mb-2.5">
-        What brings you to AgentBank?
+        What brings you to AgentEra?
       </h2>
       <p className="text-[14px] text-muted-foreground text-center leading-[1.65] max-w-105 mx-auto mb-8 font-light">
         Pick one or both. You can always switch roles later from your dashboard.

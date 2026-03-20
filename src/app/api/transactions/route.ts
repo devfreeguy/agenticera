@@ -87,6 +87,7 @@ export async function GET(
       data: allTxns,
     });
   } catch (error) {
+    console.error("[GET /api/transactions] Failed to fetch transactions for wallet:", sessionWallet, error instanceof Error ? error.message : error);
     return NextResponse.json<ApiError>(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Copy, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { polygonscanTxUrl } from "@/utils/format";
+import { getExplorerTxUrl } from "@/utils/format";
 import type { SerializedTransaction } from "@/utils/serialize";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -77,11 +77,11 @@ export function TransactionDetail({
                 <Copy size={10} strokeWidth={1.4} />
               </button>
               <a
-                href={polygonscanTxUrl(transaction.txHash)}
+                href={getExplorerTxUrl(transaction.txHash)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-(--hint) hover:text-[#3b82f6] transition-colors"
-                title="View on Polygonscan"
+                title="View on Basescan"
               >
                 <ExternalLink size={10} strokeWidth={1.4} />
               </a>
@@ -96,7 +96,7 @@ export function TransactionDetail({
       </DetailItem>
 
       <DetailItem label="Network">
-        <span className="text-[12px] text-foreground">Polygon</span>
+        <span className="text-[12px] text-foreground">Base</span>
       </DetailItem>
 
       <DetailItem label="Time">

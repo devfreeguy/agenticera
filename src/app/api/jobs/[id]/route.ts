@@ -59,6 +59,7 @@ export async function PATCH(
     const updated = await getJobById(id);
     return NextResponse.json<ApiSuccess<JobWithRelations>>({ data: serializeJob(updated!) });
   } catch (error) {
+    console.error(`[PATCH /api/jobs/${id}] Failed to update job status:`, error instanceof Error ? error.message : error);
     return NextResponse.json<ApiError>(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

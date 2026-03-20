@@ -5,8 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
 const dotenv_1 = __importDefault(require("dotenv"));
-// Load .env.local from the project root (two levels up from wdk-service/src/)
-dotenv_1.default.config({ path: path_1.default.resolve(__dirname, "../../.env.local") });
+// Load .env from the project root (two levels up from wdk-service/src/)
+dotenv_1.default.config({ path: path_1.default.resolve(__dirname, "../../.env") });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const wallet_1 = require("./routes/wallet");
@@ -14,8 +14,9 @@ const auth_1 = require("./middleware/auth");
 const app = (0, express_1.default)();
 const PORT = process.env.WDK_SERVICE_PORT ?? 3001;
 app.use(express_1.default.json());
+const allowedOrigin = process.env.ALLOWED_ORIGIN ?? /^http:\/\/localhost/;
 app.use((0, cors_1.default)({
-    origin: /^http:\/\/localhost/,
+    origin: allowedOrigin,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "x-wdk-service-secret"],
 }));

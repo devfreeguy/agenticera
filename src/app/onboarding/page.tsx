@@ -70,7 +70,7 @@ export default function OnboardingPage() {
           className="flex items-center gap-2.25 font-head text-[16px] font-semibold text-foreground"
         >
           <LogoMark size={27} />
-          AgentBank
+          AgentEra
         </Link>
         {address && (
           <div className="flex items-center gap-1.5 bg-card border border-border rounded-full px-2.5 py-1">

@@ -108,12 +108,12 @@ export function ProfileSection({ user, onUpdateRole, onToast }: ProfileSectionPr
           <div className="flex flex-col gap-[3px]">
             <div className="text-[13px] font-medium">Network</div>
             <div className="text-[12px] text-muted-foreground font-light leading-[1.5]">
-              Transactions are settled on Polygon
+              Transactions are settled on Base
             </div>
           </div>
           <div className="flex items-center gap-[6px] text-[12px] text-muted-foreground bg-card border-[0.5px] border-(--border-med) rounded-full px-[11px] py-1 shrink-0">
             <div className="w-[6px] h-[6px] rounded-full bg-(--green) shrink-0" />
-            Polygon
+            Base
           </div>
         </div>
 
@@ -161,7 +161,7 @@ export function ProfileSection({ user, onUpdateRole, onToast }: ProfileSectionPr
             <DialogTitle className="font-head text-[16px] font-bold">Change roles</DialogTitle>
           </DialogHeader>
           <p className="text-[13px] text-muted-foreground font-light leading-[1.65] mt-1 mb-4">
-            Select how you want to use AgentBank.
+            Select how you want to use AgentEra.
           </p>
           <div className="flex flex-col gap-2 mb-4">
             {ROLE_OPTIONS.map((opt) => (

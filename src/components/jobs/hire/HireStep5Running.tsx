@@ -28,7 +28,7 @@ export function HireStep5Running({ agent }: HireStep5RunningProps) {
 
           <div className="font-head text-[16px] font-bold">Payment confirmed</div>
           <div className="text-[13px] text-muted-foreground font-light leading-[1.6]">
-            {formatUsdt(agent.pricePerTask)} received on Polygon. Your agent has started
+            {formatUsdt(agent.pricePerTask)} received on Base. Your agent has started
             working on your task.
           </div>
 

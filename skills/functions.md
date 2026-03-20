@@ -1,4 +1,4 @@
-# AgentBank — Function & Utility Rules
+# AgentEra — Function & Utility Rules
 
 ## Core principle
 Business logic lives in src/lib/. Pure utilities live in src/utils/. Components and API routes stay thin.

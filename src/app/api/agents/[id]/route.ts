@@ -20,6 +20,7 @@ export async function GET(
     }
     return NextResponse.json<ApiSuccess<AgentPublic>>({ data: serializeAgent(agent) });
   } catch (error) {
+    console.error(`[GET /api/agents/${id}] Failed to fetch agent:`, error instanceof Error ? error.message : error);
     return NextResponse.json<ApiError>(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
@@ -77,6 +78,7 @@ export async function PATCH(
     const agent = await updateAgentSettings(id, updates);
     return NextResponse.json<ApiSuccess<AgentPublic>>({ data: serializeAgent(agent) });
   } catch (error) {
+    console.error(`[PATCH /api/agents/${id}] Failed to update agent:`, error instanceof Error ? error.message : error);
     return NextResponse.json<ApiError>(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }

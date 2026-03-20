@@ -47,7 +47,7 @@ export async function POST(
       return NextResponse.json<ApiError>(
         {
           error: isNetwork
-            ? "Could not verify balance. The Polygon network may be temporarily unreachable. Please try again."
+            ? "Could not verify balance. The Base network may be temporarily unreachable. Please try again."
             : msg || "Balance check failed.",
         },
         { status: 502 }
@@ -90,7 +90,7 @@ export async function POST(
       msg.startsWith("Insufficient") ||
       msg.startsWith("Transaction rejected") ||
       msg.startsWith("Could not reach") ||
-      msg.startsWith("Polygon network");
+      msg.startsWith("Base network");
 
     return NextResponse.json<ApiError>({ error: msg }, { status: isUserError ? 400 : 500 });
   }

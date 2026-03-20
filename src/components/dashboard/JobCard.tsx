@@ -23,10 +23,11 @@ interface JobCardProps {
   job: JobWithRelations;
   isNew?: boolean;
   onViewed?: () => void;
+  onResumeFlow?: () => void;
 }
 
 const STATUS_STYLES: Record<JobStatus, string> = {
-  PENDING_PAYMENT:
+  PENDING:
     "bg-[rgba(59,130,246,0.1)] border border-[rgba(59,130,246,0.2)] text-[#3b82f6]",
   PAID: "bg-[var(--orange-dim)] border border-[var(--orange-border)] text-[var(--orange)]",
   IN_PROGRESS:
@@ -38,14 +39,14 @@ const STATUS_STYLES: Record<JobStatus, string> = {
 };
 
 const STATUS_LABEL: Record<JobStatus, string> = {
-  PENDING_PAYMENT: "Pending payment",
+  PENDING: "Pending",
   PAID: "Paid",
   IN_PROGRESS: "In progress",
   DELIVERED: "Delivered",
   FAILED: "Failed",
 };
 
-export function JobCard({ job, isNew, onViewed }: JobCardProps) {
+export function JobCard({ job, isNew, onViewed, onResumeFlow }: JobCardProps) {
   const [outputOpen, setOutputOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
   const [retrying, setRetrying] = useState(false);
@@ -157,9 +158,15 @@ export function JobCard({ job, isNew, onViewed }: JobCardProps) {
               View output
             </button>
           )}
-          {status === "PENDING_PAYMENT" && (
+          {status === "PENDING" && (
             <button
-              onClick={() => setPayOpen(true)}
+              onClick={() => {
+                if (onResumeFlow) {
+                  onResumeFlow();
+                } else {
+                  setPayOpen(true);
+                }
+              }}
               className="px-2.75 py-1.25 bg-(--orange-dim) border border-(--orange-border) rounded-[6px] text-[11px] text-(--orange) hover:bg-[rgba(232,121,58,0.18)] transition-colors cursor-pointer"
             >
               Pay now
@@ -192,7 +199,10 @@ export function JobCard({ job, isNew, onViewed }: JobCardProps) {
             )
           )}
           {(status === "IN_PROGRESS" || status === "PAID") && (
-            <button className="px-2.75 py-1.25 bg-card border border-(--border-med) rounded-[6px] text-[11px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+            <button
+              onClick={handleViewOutput}
+              className="px-2.75 py-1.25 bg-card border border-(--border-med) rounded-[6px] text-[11px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
               View task
             </button>
           )}

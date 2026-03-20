@@ -71,7 +71,7 @@ export function AgentCard({ agent }: AgentCardProps) {
       toast.success("Withdrawal successful", {
         description: (
           <a
-            href={`https://polygonscan.com/tx/${txHash}`}
+            href={`https://basescan.org/tx/${txHash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="underline opacity-80 hover:opacity-100"

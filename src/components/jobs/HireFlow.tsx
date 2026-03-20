@@ -1,29 +1,33 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
-  useWriteContract,
-  useWaitForTransactionReceipt,
-  useChainId,
-  useSwitchChain,
-  useReadContract,
-} from "wagmi";
-import { polygon } from "wagmi/chains";
-import { isAxiosError } from "axios";
-import axiosClient from "@/lib/axiosClient";
-import { getAvatarColor } from "@/utils/avatarColor";
-import { AgentStatus } from "@/generated/prisma/enums";
-import { USDT_CONTRACT_ADDRESS, USDT_DECIMALS, AGENT_GAS_ROUTER_ADDRESS, AGENT_GAS_ROUTER_ABI } from "@/constants/contracts";
+  AGENT_ESCROW_ABI,
+  AGENT_ESCROW_ADDRESS,
+  USDT_CONTRACT_ADDRESS,
+  USDT_DECIMALS,
+} from "@/constants/contracts";
 import { USDT_ABI } from "@/constants/usdtAbi";
-import { useJobStore } from "@/store/jobStore";
+import { AgentStatus } from "@/generated/prisma/enums";
+import axiosClient from "@/lib/axiosClient";
 import {
+  clearJobCallbacks,
+  setJobCallbacks,
   startJobPoll,
   stopJobPoll,
-  setJobCallbacks,
-  clearJobCallbacks,
 } from "@/lib/backgroundPolls";
+import { useJobStore } from "@/store/jobStore";
 import type { AgentPublic, JobWithRelations, WalletUser } from "@/types/index";
+import { getAvatarColor } from "@/utils/avatarColor";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import {
+  useChainId,
+  useReadContract,
+  useSwitchChain,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
+import { base } from "wagmi/chains";
 import { HireStep1Detail } from "./hire/HireStep1Detail";
 import { HireStep2Task } from "./hire/HireStep2Task";
 import { HireStep3Pay } from "./hire/HireStep3Pay";
@@ -46,6 +50,8 @@ interface HireFlowProps {
   onClose: () => void;
   onJobAdded: (job: JobWithRelations) => void;
   showToast: (msg: string) => void;
+  initialJobId?: string;
+  initialTaskDescription?: string;
 }
 
 export function HireFlow({
@@ -56,13 +62,15 @@ export function HireFlow({
   onClose,
   onJobAdded,
   showToast,
+  initialJobId,
+  initialTaskDescription,
 }: HireFlowProps) {
   const router = useRouter();
   const isActive = agent.status === AgentStatus.ACTIVE;
   const avatarBg = getAvatarColor(agent.id);
   const initial = agent.name.charAt(0).toUpperCase();
 
-  const [taskDescription, setTaskDescription] = useState("");
+  const [taskDescription, setTaskDescription] = useState(initialTaskDescription || "");
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [activeJob, setActiveJob] = useState<JobWithRelations | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +82,7 @@ export function HireFlow({
 
   const chainId = useChainId();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
-  const isOnPolygon = chainId === polygon.id;
+  const isBase = chainId === base.id;
 
   const amountInWei = BigInt(
     Math.round(parseFloat(agent.pricePerTask) * 10 ** USDT_DECIMALS),
@@ -85,19 +93,23 @@ export function HireFlow({
     abi: USDT_ABI,
     functionName: "allowance",
     args: [
-      user?.walletAddress as `0x${string}` || "0x0000000000000000000000000000000000000000",
-      AGENT_GAS_ROUTER_ADDRESS as `0x${string}`,
+      (user?.walletAddress as `0x${string}`) ||
+        "0x0000000000000000000000000000000000000000",
+      AGENT_ESCROW_ADDRESS,
     ],
-    chainId: polygon.id,
+    chainId: base.id,
     query: {
       enabled: !!user?.walletAddress,
     },
   });
 
-  const hasAllowance = allowanceData ? (allowanceData as bigint) >= amountInWei : false;
+  const hasAllowance = allowanceData
+    ? (allowanceData as bigint) >= amountInWei
+    : false;
 
   const {
     writeContract,
+    writeContractAsync,
     data: writeTxHash,
     isPending: isWalletPending,
     error: writeError,
@@ -108,111 +120,52 @@ export function HireFlow({
     isLoading: isReceiptLoading,
     isSuccess: isReceiptSuccess,
     isError: isReceiptError,
-  } = useWaitForTransactionReceipt({ hash: writeTxHash, chainId: polygon.id });
+  } = useWaitForTransactionReceipt({ hash: writeTxHash, chainId: base.id });
 
-  const hasRunRef = useRef(false);
-  const prevJobIdRef = useRef<string | null>(null);
+ const hasRunRef = useRef(false);
+  const prevJobIdRef = useRef<string | null>(initialJobId || null);
+  const [isQuoting, setIsQuoting] = useState(false); // New state for Quote Loading
 
   // Reset local state when returning to detail
   useEffect(() => {
     if (step === "detail") {
-      // Stop any background poll for the previous job (user abandoned)
       if (prevJobIdRef.current) {
         stopJobPoll(prevJobIdRef.current);
         prevJobIdRef.current = null;
       }
-      setTaskDescription("");
-      setActiveJobId(null);
-      setActiveJob(null);
+      setTaskDescription(initialTaskDescription || "");
+      if (!initialJobId) {
+        setActiveJobId(null);
+        setActiveJob(null);
+      }
       setError(null);
       setIsSubmitting(false);
+      setIsQuoting(false);
       resetWrite();
       hasRunRef.current = false;
     }
   }, [step]);
 
-  // Handle successful transaction receipts (Approve or Payment)
+  // Handle successful transaction receipts (Approve ONLY)
   useEffect(() => {
-    if (
-      !isReceiptSuccess ||
-      !writeTxHash ||
-      !user ||
-      activeJobId ||
-      isSubmitting
-    )
-      return;
+    if (!isReceiptSuccess || !writeTxHash || !user || isSubmitting) return;
 
     if (isApproving) {
       // Finished approving, now trigger the actual payment
       setIsApproving(false);
       refetchAllowance().then(() => {
         resetWrite();
-        handleExecutePayment();
+        // The job is already secured in Vault 1. Go straight to Vault 2.
+        handleExecutePayment(prevJobIdRef.current!); 
       });
-      return;
     }
-
-    // Otherwise, this is the actual payment receipt. Create the job.
-    async function createAndConfirm() {
-      setIsSubmitting(true);
-      setError(null);
-      try {
-        const res = await axiosClient.post<{ data: { id: string } }>(
-          "/api/jobs",
-          {
-            clientId: user!.id,
-            agentId: agent.id,
-            taskDescription,
-          },
-        );
-        const jobId = res.data.data.id;
-        setActiveJobId(jobId);
-        prevJobIdRef.current = jobId;
-        setGlobalActiveJobId(jobId);
-
-        // Confirm payment
-        await axiosClient.post(`/api/jobs/${jobId}/check-payment`, {
-          txHash: writeTxHash,
-        });
-
-        // Immediately add a partial job to the store so it appears in the dashboard
-        const partialJob: JobWithRelations = {
-          id: jobId,
-          clientId: user!.id,
-          agentId: agent.id,
-          taskDescription,
-          priceUsdt: agent.pricePerTask,
-          status: "PAID" as const,
-          output: null,
-          txHash: writeTxHash ?? null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          agent,
-          client: { id: user!.id, walletAddress: user!.walletAddress ?? "" },
-        };
-        addJob(partialJob);
-        onJobAdded(partialJob);
-
-        onStepChange("running");
-      } catch (err) {
-        const msg =
-          isAxiosError(err) && err.response?.data?.error
-            ? (err.response.data.error as string)
-            : "Failed to create job. Please try again.";
-        setError(msg);
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-
-    createAndConfirm();
+    // We completely deleted the old createAndConfirm block here. Vault 1 handles it now!
   }, [isReceiptSuccess, writeTxHash]);
 
   // Start background polling when entering "running" step
   useEffect(() => {
     if (step !== "running" || !activeJobId) return;
 
-    // Trigger agent execution exactly once per job
     if (!hasRunRef.current) {
       hasRunRef.current = true;
       axiosClient
@@ -228,51 +181,154 @@ export function HireFlow({
       },
       onFailed: (job) => {
         setActiveJob(job);
-        setError("The agent failed to complete the task.");
+        // 🔥 FIX: Move to delivered page so they can see the rejection/fail reason!
+        onStepChange("delivered");
       },
     });
 
     return () => {
-      // Sheet closing — clear callbacks so background poll shows toast instead
       if (activeJobId) clearJobCallbacks(activeJobId);
     };
   }, [step, activeJobId]);
 
-  function handleExecutePayment() {
-    writeContract({
-      address: AGENT_GAS_ROUTER_ADDRESS as `0x${string}`,
-      abi: AGENT_GAS_ROUTER_ABI,
-      functionName: "payAgent",
-      args: [
-        agent.walletAddress as `0x${string}`,
-        USDT_CONTRACT_ADDRESS as `0x${string}`,
-        amountInWei,
-      ],
-      value: BigInt(0.1 * 10 ** 18), // 0.1 MATIC flat fee
-      chainId: polygon.id,
-    });
-  }
-
-  function handlePayWithWallet() {
+  // =========================================================
+  // VAULT 1: THE QUOTE (Ask the AI before touching the wallet)
+  // =========================================================
+  async function handlePayWithWallet() {
     if (!user) {
       router.push("/connect");
       return;
     }
     resetWrite();
     setError(null);
-    
+    setIsQuoting(true); // Show loading spinner on the button
+
+    let pendingJobId;
+    try {
+      const dbResponse = await fetch("/api/hire", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: user.id,
+          agentId: agent.id,
+          taskDescription: taskDescription,
+          priceUsdt: agent.pricePerTask, 
+        }),
+      });
+
+      const data = await dbResponse.json();
+
+      if (!dbResponse.ok) {
+        // AI Rejected it! Throw the AI's reason.
+        throw new Error(data.reason || data.error || "Agent declined the task.");
+      }
+      
+      pendingJobId = data.jobId;
+      prevJobIdRef.current = pendingJobId; // Save it for later
+
+    } catch (err: any) {
+      setError(err.message); // Displays "Agent Rejected: Not profitable" on the UI
+      setIsQuoting(false);
+      return; // STOP FLOW. Wallet never opens.
+    }
+
+    setIsQuoting(false);
+
+    // AI Accepted. Now we secure the funds.
+    // 🛠️ DEV MODE: skip wallet approval entirely — go straight to fake payment
+    if (process.env.NODE_ENV === "development") {
+      setIsApproving(false);
+      handleExecutePayment(pendingJobId);
+      return;
+    }
+
     if (!hasAllowance) {
       setIsApproving(true);
       writeContract({
         address: USDT_CONTRACT_ADDRESS as `0x${string}`,
         abi: USDT_ABI,
         functionName: "approve",
-        args: [AGENT_GAS_ROUTER_ADDRESS as `0x${string}`, amountInWei],
-        chainId: polygon.id,
+        args: [AGENT_ESCROW_ADDRESS, amountInWei],
+        chainId: base.id,
       });
     } else {
       setIsApproving(false);
-      handleExecutePayment();
+      handleExecutePayment(pendingJobId);
+    }
+  }
+
+  // =========================================================
+  // VAULT 2 & 3: ESCROW HANDSHAKE & AI WAKE UP
+  // =========================================================
+  async function handleExecutePayment(jobId: string) {
+    resetWrite();
+    setError(null);
+    setIsSubmitting(true);
+
+    // 1. ADD THIS DEV MODE BYPASS
+    if (process.env.NODE_ENV === "development") {
+      console.log("🛠️ DEV MODE: Skipping MetaMask...");
+      const fakeTxHash =
+        "0x" + Math.random().toString(16).slice(2, 66).padEnd(64, "0");
+
+      try {
+        // Setup UI for running state before triggering the backend
+        setActiveJobId(jobId);
+        setGlobalActiveJobId(jobId);
+        onStepChange("running");
+
+        const execResponse = await fetch("/api/jobs/execute", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobId: jobId, txHash: fakeTxHash }),
+        });
+
+        if (!execResponse.ok) throw new Error("Execution trigger failed");
+      } catch (err) {
+        setError(
+          "Dev Mode: Execution trigger failed. Check backend logs.",
+        );
+        setIsSubmitting(false);
+      }
+      return; // Stop execution here!
+    }
+
+    let txHash;
+    try {
+      txHash = await writeContractAsync({
+        address: AGENT_ESCROW_ADDRESS,
+        abi: AGENT_ESCROW_ABI,
+        functionName: "createJob",
+        args: [
+          agent.walletAddress as `0x${string}`,
+          USDT_CONTRACT_ADDRESS as `0x${string}`,
+          amountInWei,
+        ],
+        chainId: base.id,
+      });
+    } catch (err) {
+      setError("Payment cancelled. You can retry from your dashboard.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // Setup UI for running state before triggering the backend
+      setActiveJobId(jobId);
+      setGlobalActiveJobId(jobId);
+      onStepChange("running");
+
+      const execResponse = await fetch("/api/jobs/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId: jobId, txHash }),
+      });
+
+      if (!execResponse.ok) throw new Error("Execution trigger failed");
+
+    } catch (err) {
+      setError("Payment secured, but agent is taking long to respond. Check dashboard.");
+      setIsSubmitting(false);
     }
   }
 
@@ -335,7 +391,7 @@ export function HireFlow({
         isConfirming={isConfirming}
         isBusy={isBusy}
         isApprovingState={isApprovingState}
-        isOnPolygon={isOnPolygon}
+        isBase={isBase}
         isSwitching={isSwitching}
         writeTxHash={writeTxHash}
         payError={payError}
@@ -347,7 +403,8 @@ export function HireFlow({
           onStepChange("describe");
         }}
         onPay={handlePayWithWallet}
-        onSwitchChain={() => switchChain({ chainId: polygon.id })}
+        onSwitchChain={() => switchChain({ chainId: base.id })}
+        isQuoting={isQuoting}
       />
     );
   }

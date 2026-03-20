@@ -9,7 +9,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // AgentBank design variants
+        // AgentEra design variants
         primary:
           "bg-[var(--orange)] text-white hover:opacity-90 rounded-[10px]",
         secondary:
@@ -26,7 +26,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        // AgentBank design sizes
+        // AgentEra design sizes
         sm: "px-4 py-2 text-[11px]",
         md: "px-[26px] py-[13px] text-[14px]",
         lg: "px-[28px] py-[14px] text-[15px]",

@@ -4,10 +4,40 @@ import path from "path";
 import WDK from "@tetherto/wdk";
 import WalletManagerEvm from "@tetherto/wdk-wallet-evm";
 
-dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
+dotenv.config({ path: path.resolve(__dirname, "../.env") }); // Adjusted to point to your new unified .env
 
 const KEY = process.env.AGENT_ENCRYPTION_KEY!;
-const POLYGON_RPC_URL = process.env.NEXT_PUBLIC_POLYGON_RPC!;
+const POLYGON_RPC_URL =
+  process.env.BASE_RPC_URL || process.env.POLYGON_RPC_URL!; // Works for Base or Polygon
+
+// --- 🏗️ THE UNIVERSAL UTILITY TEMPLATE ---
+const UNIVERSAL_PROMPT = (role: string, goal: string) => `
+# IDENTITY
+You are an autonomous AI Agent specialized in: ${role}.
+
+# OPERATING GOALS
+${goal}
+
+# FINANCIAL EVALUATION
+- You are paid in crypto on-chain. 
+- API Cost is ~$0.001 per 1k tokens.
+- You must maintain a 50%+ profit margin. Reject if the task is too large for the reward.
+
+# RESPONSE PROTOCOL
+Respond ONLY in JSON. No preamble.
+{
+  "accept": true,
+  "delegate": false,
+  "subAgentId": null,
+  "subTask": null,
+  "mainTask": "Short summary of user request",
+  "estimatedCost": number,
+  "expectedProfit": number,
+  "confidence": number,
+  "reason": "Clear and profitable utility task",
+  "response": "YOUR ACTUAL WORK GOES HERE"
+}
+`;
 
 function deriveKey(secret: string): Buffer {
   return crypto.createHash("sha256").update(secret).digest();
@@ -17,21 +47,23 @@ function encryptSeed(seedPhrase: string, secret: string): string {
   const key = deriveKey(secret);
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-  const ciphertext = Buffer.concat([cipher.update(seedPhrase, "utf8"), cipher.final()]);
+  const ciphertext = Buffer.concat([
+    cipher.update(seedPhrase, "utf8"),
+    cipher.final(),
+  ]);
   const authTag = cipher.getAuthTag();
   return `${iv.toString("hex")}:${authTag.toString("hex")}:${ciphertext.toString("hex")}`;
 }
 
 async function createAgentWallet() {
   const seedPhrase = WDK.getRandomSeedPhrase();
-  const wdk = new WDK(seedPhrase).registerWallet("polygon", WalletManagerEvm, {
+  const wdk = new WDK(seedPhrase).registerWallet("base", WalletManagerEvm, {
     provider: POLYGON_RPC_URL,
   });
-  const account = await wdk.getAccount("polygon", 0);
+  const account = await wdk.getAccount("base", 0);
   const address = await account.getAddress();
   account.dispose();
   wdk.dispose();
-
   const encryptedSeed = encryptSeed(seedPhrase, KEY);
   return { address, encryptedSeed };
 }
@@ -39,204 +71,167 @@ async function createAgentWallet() {
 async function main() {
   const { prisma } = await import("../src/lib/prisma");
   const { Role } = await import("../src/generated/prisma/enums");
-  
-  console.log("Wiping Database for a Clean Seed...");
-  await prisma.$executeRawUnsafe(`TRUNCATE TABLE "User", "Agent", "Job", "AgentTransaction", "SubAgentJob", "Category", "Subcategory" CASCADE;`);
 
-  // 1. Create Base Categories
-  console.log("Creating categories...");
-  const catDev = await prisma.category.create({
-    data: { name: "Code Snippets & Utilities", slug: "code-utilities", description: "Small development tasks and code fixes" }
-  });
-  const catContent = await prisma.category.create({
-    data: { name: "Everyday Writing", slug: "everyday-writing", description: "Emails, social media, and short copy" }
-  });
-  const catResearch = await prisma.category.create({
-    data: { name: "Fact & Data Polish", slug: "fact-data", description: "Formatting data and quick web summaries" }
-  });
-  const catManagement = await prisma.category.create({
-    data: { name: "Task Automation", slug: "task-automation", description: "Simple delegation and combined tasks" }
-  });
-  const catDesign = await prisma.category.create({
-    data: { name: "Design Micro-Tasks", slug: "design-micro", description: "Color palettes, CSS fixes, and quick ideas" }
-  });
+  console.log("🚀 Starting Fresh Seed Deployment...");
 
-  // 2. Create Platform Owner User
-  console.log("Creating owner...");
-  const ownerAddress = process.env.PLATFORM_BILLING_ADDRESS || "0xA2a4fF50690a06c83786B0FB1eBd07AE4F636B40";
+  // 1. RECREATE THE OWNER ACCOUNT (Since the DB is completely empty now)
+  const ownerAddress =
+    process.env.PLATFORM_BILLING_ADDRESS ||
+    "0xA2a4fF50690a06c83786B0FB1eBd07AE4F636B40";
   const owner = await prisma.user.upsert({
     where: { walletAddress: ownerAddress },
     update: {},
-    create: {
-      walletAddress: ownerAddress,
-      role: Role.OWNER,
-      onboarded: true
-    }
+    create: { walletAddress: ownerAddress, role: Role.OWNER, onboarded: true },
+  });
+  console.log(`✅ Admin Account created for: ${ownerAddress}`);
+
+  // 2. CREATE INDEPENDENT CATEGORIES
+  console.log("Creating independent categories...");
+  const catDev = await prisma.category.create({
+    data: { name: "Software Engineering", slug: "software-eng" },
+  });
+  const catOps = await prisma.category.create({
+    data: { name: "Cloud Infrastructure", slug: "cloud-infra" },
+  });
+  const catDevOps = await prisma.category.create({
+    data: { name: "DevOps Automation", slug: "devops-auto" },
+  });
+  const catWeb3 = await prisma.category.create({
+    data: { name: "Web3 Ecosystem", slug: "web3-eco" },
+  });
+  const catSolidity = await prisma.category.create({
+    data: { name: "Smart Contracts", slug: "smart-contracts" },
+  });
+  const catMarketing = await prisma.category.create({
+    data: { name: "Growth Marketing", slug: "growth-marketing" },
+  });
+  const catAds = await prisma.category.create({
+    data: { name: "Advertising & SEO", slug: "ads-seo" },
+  });
+  const catSec = await prisma.category.create({
+    data: { name: "Cybersecurity", slug: "cybersec" },
+  });
+  const catLegal = await prisma.category.create({
+    data: { name: "Legal Tech", slug: "legal-tech" },
+  });
+  const catComms = await prisma.category.create({
+    data: { name: "Corporate Comms", slug: "corp-comms" },
+  });
+  const catData = await prisma.category.create({
+    data: { name: "Data Science", slug: "data-science" },
+  });
+  const catUx = await prisma.category.create({
+    data: { name: "UI/UX Design", slug: "ui-ux" },
   });
 
-  // 3. Define Seed Agents (20 Practical MVP Purposes)
+  // 3. THE UTILITY FLEET
   const seedAgents = [
-    // --- DEVELOPER MICRO-TASKS ---
     {
-      name: "Regex Generator",
-      categories: [catDev.id],
-      priceUsdt: 1.0,
-      prompt: "You are a Regular Expression specialist. Write and explain a short RegEx snippet to format or extract specific text patterns based on the user's requirements."
+      name: "Unit Test Architect",
+      cat: [catDev.id],
+      price: 5.5,
+      role: "Automated Test Generation",
+      goal: "Generating comprehensive Vitest/Jest suites for React/Node components.",
     },
     {
-      name: "JSDoc Commenter",
-      categories: [catDev.id],
-      priceUsdt: 1.5,
-      prompt: "You read JavaScript or TypeScript functions and output them with properly formatted, highly detailed JSDoc comment blocks."
+      name: "Terraform Titan",
+      cat: [catOps.id],
+      price: 8.5,
+      role: "Infrastructure as Code",
+      goal: "Drafting scalable Terraform modules for AWS/GCP.",
     },
     {
-      name: "Tailwind CSS Fixer",
-      categories: [catDev.id, catDesign.id],
-      priceUsdt: 2.0,
-      prompt: "You debug and write Tailwind CSS utility classes. If a user asks how to center a div or make a grid responsive, give them the exact 1-line HTML snippet."
+      name: "CI/CD Pipeline Master",
+      cat: [catDevOps.id],
+      price: 6.0,
+      role: "GitHub Actions Specialist",
+      goal: "Building robust automated testing and deployment workflows.",
     },
     {
-      name: "JSON Formatter",
-      categories: [catDev.id],
-      priceUsdt: 0.5,
-      prompt: "You take messy, unformatted data and cleanly format it into valid, strictly-typed JSON. If there are syntax errors, fix them automatically."
+      name: "Tokenomics Modeler",
+      cat: [catWeb3.id],
+      price: 15.0,
+      role: "Crypto-Economic Analysis",
+      goal: "Simulating token distribution and vesting schedules.",
     },
     {
-      name: "SQL Query Writer",
-      categories: [catDev.id],
-      priceUsdt: 3.0,
-      prompt: "You write basic to medium SQL queries (SELECT, JOIN, GROUP BY). Given a schema or table concepts, provide the exact query string they need."
-    },
-
-    // --- DESIGN MICRO-TASKS ---
-    {
-      name: "Color Palette Generator",
-      categories: [catDesign.id],
-      priceUsdt: 1.0,
-      prompt: "You suggest aesthetically pleasing color palettes. Provide 5 distinct HEX codes with names (Primary, Secondary, Accent, Background, Text) based on the user's requested vibe."
+      name: "Gas Optimizer Pro",
+      cat: [catSolidity.id],
+      price: 12.0,
+      role: "Solidity Refinement",
+      goal: "Reducing GWEI consumption by optimizing smart contracts.",
     },
     {
-      name: "CSS Animation Expert",
-      categories: [catDesign.id, catDev.id],
-      priceUsdt: 2.5,
-      prompt: "You write small, lightweight CSS animations (keyframes). Provide the raw CSS code to animate a button, text, or loading spinner."
+      name: "Viral Thread Creator",
+      cat: [catMarketing.id],
+      price: 3.0,
+      role: "Social Media Strategy",
+      goal: "Converting technical content into high-engagement threads.",
     },
     {
-      name: "Logo Concept Ideator",
-      categories: [catDesign.id],
-      priceUsdt: 1.5,
-      prompt: "You brainstorm 3 distinct textual descriptions for a logo based on a brand name and industry. Do not generate an image, just describe the visual concepts clearly."
-    },
-
-    // --- WRITING MICRO-TASKS ---
-    {
-      name: "Professional Email Drafter",
-      categories: [catContent.id],
-      priceUsdt: 2.0,
-      prompt: "You take bullet points of what a user wants to say and turn it into a polite, professional corporate email."
+      name: "SEO Meta Architect",
+      cat: [catAds.id],
+      price: 1.5,
+      role: "Search Engine Optimization",
+      goal: "Crafting high-CTR meta titles and descriptions.",
     },
     {
-      name: "Grammar & Tone Polisher",
-      categories: [catContent.id],
-      priceUsdt: 1.0,
-      prompt: "You fix typos, grammatical errors, and awkward phrasing in text. Improve the flow while keeping the original meaning."
+      name: "Audit Log Sentinel",
+      cat: [catSec.id],
+      price: 7.0,
+      role: "Anomaly Detection",
+      goal: "Reviewing raw server logs for security vulnerabilities.",
     },
     {
-      name: "Tweet Thread Creator",
-      categories: [catContent.id],
-      priceUsdt: 3.0,
-      prompt: "You turn an idea or paragraph into a highly engaging, 3-part Twitter thread. Use formatting and relevant emojis."
+      name: "ToS Risk Auditor",
+      cat: [catLegal.id],
+      price: 4.0,
+      role: "Legal Doc Summarization",
+      goal: "Extracting 'red flag' clauses from complex legal documents.",
     },
     {
-      name: "SEO Meta Description Writer",
-      categories: [catContent.id],
-      priceUsdt: 1.5,
-      prompt: "You write extremely concise SEO meta descriptions (under 160 characters) based on the topic provided."
+      name: "ExecuDraft Pro",
+      cat: [catComms.id],
+      price: 2.0,
+      role: "Professional Email Synthesis",
+      goal: "Turning messy notes into polished corporate communication.",
     },
     {
-      name: "Product Description Writer",
-      categories: [catContent.id],
-      priceUsdt: 2.5,
-      prompt: "You write catchy, 2-paragraph descriptions for e-commerce products highlighting their features and benefits."
-    },
-
-    // --- RESEARCH / DATA MICRO-TASKS ---
-    {
-      name: "Markdown Table Formatter",
-      categories: [catResearch.id],
-      priceUsdt: 1.0,
-      prompt: "You convert raw lists, facts, or comma-separated values into a beautifully aligned Markdown table."
+      name: "SQL Performance Tuner",
+      cat: [catData.id],
+      price: 4.5,
+      role: "Query Optimization",
+      goal: "Refactoring slow SQL queries for better database efficiency.",
     },
     {
-      name: "Article Summarizer",
-      categories: [catResearch.id],
-      priceUsdt: 1.5,
-      prompt: "You summarize long blocks of text into 3 key bullet points."
+      name: "Tailwind Component Gen",
+      cat: [catUx.id],
+      price: 3.5,
+      role: "Responsive Frontend UI",
+      goal: "Building modern React components using Tailwind CSS.",
     },
-    {
-      name: "Competitor Feature Researcher",
-      categories: [catResearch.id],
-      priceUsdt: 4.0,
-      prompt: "You identify standard features expected in common software tools. When asked about competitors in a space, list 5 features they usually have."
-    },
-    {
-      name: "Quick Fact Checker",
-      categories: [catResearch.id],
-      priceUsdt: 2.0,
-      prompt: "You verify common facts or statements. State whether the premise is True or False, followed by a 1-sentence explanation."
-    },
-
-    // --- SIMPLE ORCHESTRATORS (Delegating minor tasks) ---
-    {
-      name: "Blog Post Orchestrator",
-      categories: [catManagement.id, catContent.id],
-      priceUsdt: 6.0,
-      prompt: `You orchestrate the creation of a simple blog post. 
-If the user gives you a topic, delegate the 'Outline creation' to a Research agent or 'Writing' to a Copywriter agent. 
-Combine their output into a neat Markdown file.`
-    },
-    {
-      name: "Landing Page Copy Maker",
-      categories: [catManagement.id, catDesign.id, catContent.id],
-      priceUsdt: 7.0,
-      prompt: `You handle simple landing page copy. 
-Delegate 'Headline Writing' to a Copywriter and 'Color Palette' to a Designer. 
-Then, present the user with the complete headline, CTA, and color hex codes.`
-    },
-    {
-      name: "Newsletter Compiler",
-      categories: [catManagement.id, catContent.id],
-      priceUsdt: 5.0,
-      prompt: `You compile a weekly newsletter. 
-Delegate tasks like 'Summarize news' or 'Draft Intro Email' to specific writing/research sub-agents. 
-Output the final newsletter format.`
-    }
   ];
 
-  // 4. Generate Wallets and Insert Agents
-  console.log(`Generating ${seedAgents.length} practical MVP agents. This will take a moment...`);
-  let count = 1;
+  console.log(`Deploying ${seedAgents.length} Agents...`);
 
-  for (const agentDef of seedAgents) {
+  for (const a of seedAgents) {
     const { address, encryptedSeed } = await createAgentWallet();
-    
     await prisma.agent.create({
       data: {
         ownerId: owner.id,
-        name: agentDef.name,
-        systemPrompt: agentDef.prompt,
-        pricePerTask: agentDef.priceUsdt,
-        categoryIds: agentDef.categories,
+        name: a.name,
+        systemPrompt: UNIVERSAL_PROMPT(a.role, a.goal),
+        pricePerTask: a.price,
+        categoryIds: a.cat,
         walletAddress: address,
         encryptedSeedPhrase: encryptedSeed,
-        status: "ACTIVE"
-      }
+        status: "ACTIVE",
+      },
     });
-    console.log(`[${count}/${seedAgents.length}] Created agent: ${agentDef.name} (${address})`);
-    count++;
+    console.log(`✅ [${a.name}] created.`);
   }
 
-  console.log("Database wiped and seeded successfully with 20 MVP-scoped agents!");
+  console.log("✨ Full Database Rebuild Complete.");
   await prisma.$disconnect();
 }
 

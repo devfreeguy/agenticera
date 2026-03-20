@@ -10,18 +10,59 @@ const wdk_1 = __importDefault(require("@tetherto/wdk"));
 const wdk_wallet_evm_1 = __importDefault(require("@tetherto/wdk-wallet-evm"));
 const router = (0, express_1.Router)();
 exports.walletRouter = router;
-const POLYGON_RPC_URL = process.env.NEXT_PUBLIC_POLYGON_RPC;
-const USDT_CONTRACT_ADDRESS = "0xc2132D05D31c914a87C6611C10748AEb04B58e8F";
+const BASE_RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC;
+const USDT_CONTRACT_ADDRESS = "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2";
 const USDT_DECIMALS = 6;
 const INDEXER_BASE_URL = "https://wdk-api.tether.io";
-// Fallback gas config used when the Polygon gas station times out
-const POLYGON_GAS_CONFIG = {
-    provider: POLYGON_RPC_URL,
-    gasPrice: 50000000000n, // 50 gwei
+// Fallback gas config used when the Base gas station times out
+const BASE_GAS_CONFIG = {
+    provider: BASE_RPC_URL,
+    gasPrice: 100000000n, // 0.1 gwei (example for Base)
     transferMaxFee: 1000000000000000n, // max fee cap
 };
 const POLL_INTERVAL_MS = 5000;
 const POLL_TIMEOUT_MS = 10 * 60 * 1000;
+// Alternate nodes to fallback to if one is rate-limiting
+const RPC_NODES = [
+    BASE_RPC_URL,
+    "https://base.llamarpc.com",
+    "https://base.meowrpc.com",
+    "https://1rpc.io/base" // only supports standard RPC methods
+];
+async function rpcFetch(body) {
+    const bodyStr = JSON.stringify(body);
+    for (let attempt = 0; attempt < 5; attempt++) {
+        for (const rpc of RPC_NODES) {
+            try {
+                const res = await fetch(rpc, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: bodyStr
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.error)
+                        throw new Error(data.error.message);
+                    return data;
+                }
+                if (res.status === 429) {
+                    // If 429, try the next node immediately
+                    continue;
+                }
+                throw new Error(`RPC status ${res.status}`);
+            }
+            catch (err) {
+                // If it's the last node and last attempt, throw
+                if (rpc === RPC_NODES[RPC_NODES.length - 1] && attempt === 4) {
+                    throw err;
+                }
+            }
+        }
+        // Wait before retrying entire list
+        await new Promise(r => setTimeout(r, 500 + attempt * 500));
+    }
+    throw new Error("All RPC nodes exhausted");
+}
 // Carries an HTTP status so the outer handler can forward the right code
 class WdkError extends Error {
     constructor(message, statusCode) {
@@ -33,8 +74,8 @@ class WdkError extends Error {
 function classifyTransferError(raw) {
     const lower = raw.toLowerCase();
     if (lower.includes("insufficient funds") ||
-        (lower.includes("insufficient") && (lower.includes("gas") || lower.includes("native") || lower.includes("matic")))) {
-        return new WdkError("Insufficient MATIC for gas fees. Send a small amount of MATIC (0.01+) to the agent wallet address to cover transaction fees.", 400);
+        (lower.includes("insufficient") && (lower.includes("gas") || lower.includes("native") || lower.includes("eth")))) {
+        return new WdkError("Insufficient ETH for gas fees. Send a small amount of ETH (0.001+) to the agent wallet address to cover transaction fees.", 400);
     }
     if (lower.includes("execution reverted") ||
         (lower.includes("insufficient") && (lower.includes("balance") || lower.includes("token") || lower.includes("usdt") || lower.includes("erc20")))) {
@@ -44,10 +85,10 @@ function classifyTransferError(raw) {
         return new WdkError("Transaction rejected.", 400);
     }
     if (lower.includes("timeout") || lower.includes("gas station") || lower.includes("congested")) {
-        return new WdkError("Polygon network is congested. Please try again in a few seconds.", 503);
+        return new WdkError("Base network is congested. Please try again in a few seconds.", 503);
     }
     if (lower.includes("fetch") || lower.includes("network") || lower.includes("econnrefused") || lower.includes("etimedout")) {
-        return new WdkError("Could not reach Polygon network. Check your internet connection and try again.", 503);
+        return new WdkError("Could not reach Base network. Check your internet connection and try again.", 503);
     }
     return new WdkError(`Transaction failed: ${raw}`, 500);
 }
@@ -95,10 +136,10 @@ function decryptSeed(encryptedSeed) {
 router.post("/create", async (_req, res) => {
     try {
         const seedPhrase = wdk_1.default.getRandomSeedPhrase();
-        const wdk = new wdk_1.default(seedPhrase).registerWallet("polygon", wdk_wallet_evm_1.default, {
-            provider: POLYGON_RPC_URL,
+        const wdk = new wdk_1.default(seedPhrase).registerWallet("base", wdk_wallet_evm_1.default, {
+            provider: BASE_RPC_URL,
         });
-        const account = await wdk.getAccount("polygon", 0);
+        const account = await wdk.getAccount("base", 0);
         const address = await account.getAddress();
         account.dispose();
         wdk.dispose();
@@ -136,10 +177,10 @@ router.post("/send", async (req, res) => {
         let result;
         try {
             // First attempt: let WDK fetch gas price from gas station
-            const wdk = new wdk_1.default(seedPhrase).registerWallet("polygon", wdk_wallet_evm_1.default, {
-                provider: POLYGON_RPC_URL,
+            const wdk = new wdk_1.default(seedPhrase).registerWallet("base", wdk_wallet_evm_1.default, {
+                provider: BASE_RPC_URL,
             });
-            const account = await wdk.getAccount("polygon", 0);
+            const account = await wdk.getAccount("base", 0);
             result = await account.transfer(transferPayload);
             account.dispose();
             wdk.dispose();
@@ -159,8 +200,8 @@ router.post("/send", async (req, res) => {
             // Retry with hardcoded gas config
             console.warn("[send] network/gas station error, retrying with fallback gas config:", msg);
             try {
-                const wdk2 = new wdk_1.default(seedPhrase).registerWallet("polygon", wdk_wallet_evm_1.default, POLYGON_GAS_CONFIG);
-                const account2 = await wdk2.getAccount("polygon", 0);
+                const wdk2 = new wdk_1.default(seedPhrase).registerWallet("base", wdk_wallet_evm_1.default, BASE_GAS_CONFIG);
+                const account2 = await wdk2.getAccount("base", 0);
                 result = await account2.transfer(transferPayload);
                 account2.dispose();
                 wdk2.dispose();
@@ -189,17 +230,24 @@ router.get("/balance/:address", async (req, res) => {
         return;
     }
     try {
-        const url = `${INDEXER_BASE_URL}/api/v1/polygon/usdt/${address}/token-balances`;
-        const indexerRes = await fetch(url, { headers: indexerHeaders() });
-        if (!indexerRes.ok) {
-            res.status(502).json({ error: "Could not fetch wallet balance. Check your network connection." });
-            return;
+        const addressParam = address.toLowerCase().replace("0x", "").padStart(64, "0");
+        const dataPayload = "0x70a08231" + addressParam;
+        const rpcData = await rpcFetch({
+            jsonrpc: "2.0", id: 1, method: "eth_call",
+            params: [{ to: USDT_CONTRACT_ADDRESS, data: dataPayload }, "latest"]
+        });
+        if (rpcData.result && rpcData.result !== '0x') {
+            const balanceDecimals = BigInt(rpcData.result);
+            const balance = (Number(balanceDecimals) / (10 ** USDT_DECIMALS)).toString();
+            res.json({ balance, address });
         }
-        const data = (await indexerRes.json());
-        res.json({ balance: data.tokenBalance.amount, address });
+        else {
+            res.json({ balance: "0", address });
+        }
     }
-    catch {
-        res.status(500).json({ error: "Could not fetch wallet balance. Check your network connection." });
+    catch (error) {
+        console.error(`[wdk-service] Network/Fetch error fetching balance for ${address}:`, error.message);
+        res.status(500).json({ error: `Fetch error: ${error.message}` });
     }
 });
 // POST /wallet/verify-payment
@@ -212,23 +260,35 @@ router.post("/verify-payment", async (req, res) => {
     try {
         const expectedAmount = parseFloat(expectedAmountUsdt);
         const deadline = Date.now() + POLL_TIMEOUT_MS;
+        // Topic: Transfer(address,address,uint256)
+        const topic0 = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+        const topic2 = "0x" + walletAddress.toLowerCase().replace("0x", "").padStart(64, "0");
         while (Date.now() < deadline) {
             try {
-                const url = `${INDEXER_BASE_URL}/api/v1/polygon/usdt/${walletAddress}/token-transfers?fromTs=${afterTimestamp}&sort=desc&limit=20`;
-                const indexerRes = await fetch(url, { headers: indexerHeaders() });
-                if (indexerRes.ok) {
-                    const data = (await indexerRes.json());
-                    for (const transfer of data.transfers) {
-                        if (transfer.to.toLowerCase() === walletAddress.toLowerCase() &&
-                            parseFloat(transfer.amount) >= expectedAmount) {
-                            res.json({ confirmed: true, txHash: transfer.transactionHash });
-                            return;
-                        }
+                // Calculate safe fromBlock (assuming ~2s block time on Base)
+                const secondsAgo = Math.max(0, Math.floor((Date.now() - afterTimestamp) / 1000));
+                const blocksAgo = Math.ceil(secondsAgo / 2) + 20; // 20 blocks buffer
+                // Fetch current block
+                let rpcData = await rpcFetch({
+                    jsonrpc: "2.0", id: 1, method: "eth_blockNumber", params: []
+                });
+                const latestBlockNum = parseInt(rpcData.result, 16);
+                const fromBlockHex = "0x" + Math.max(0, latestBlockNum - Math.min(blocksAgo, 2000)).toString(16);
+                rpcData = await rpcFetch({
+                    jsonrpc: "2.0", id: 2, method: "eth_getLogs",
+                    params: [{ fromBlock: fromBlockHex, toBlock: "latest", address: USDT_CONTRACT_ADDRESS, topics: [topic0, null, topic2] }]
+                });
+                const logs = rpcData.result || [];
+                for (const log of logs) {
+                    const amountTransfer = Number(BigInt(log.data)) / (10 ** USDT_DECIMALS);
+                    if (amountTransfer >= expectedAmount) {
+                        res.json({ confirmed: true, txHash: log.transactionHash });
+                        return;
                     }
                 }
             }
-            catch {
-                // Swallow transient errors and continue polling
+            catch (e) {
+                console.warn("[wdk-service] Polling error:", e.message);
             }
             await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
         }
@@ -242,19 +302,22 @@ router.post("/verify-payment", async (req, res) => {
 router.get("/transaction/:txHash", async (req, res) => {
     const { txHash } = req.params;
     try {
-        const url = `${INDEXER_BASE_URL}/api/v1/polygon/usdt/${txHash}/token-transfers`;
-        const indexerRes = await fetch(url, { headers: indexerHeaders() });
-        if (!indexerRes.ok) {
-            res.status(502).json({ error: `Indexer error: ${indexerRes.status}` });
-            return;
-        }
-        const data = (await indexerRes.json());
-        const tx = data.transfers.find((t) => t.transactionHash === txHash);
-        if (!tx) {
+        const rpcData = await rpcFetch({
+            jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt",
+            params: [txHash]
+        });
+        const receipt = rpcData.result;
+        if (!receipt) {
             res.status(404).json({ error: "Transaction not found" });
             return;
         }
-        res.json(tx);
+        // Check if it's a success
+        if (receipt.status === "0x1" || receipt.status === "0x01" || receipt.status === 1) {
+            res.json({ transactionHash: txHash, status: "SUCCESS", receipt });
+        }
+        else {
+            res.status(400).json({ error: "Transaction failed on chain", receipt });
+        }
     }
     catch (error) {
         res.status(500).json({ error: error instanceof Error ? error.message : "Transaction fetch failed" });

@@ -1,4 +1,4 @@
-# AgentBank — WDK Rules
+# AgentEra — WDK Rules
 
 ## Reference docs
 Before writing any WDK-related code, read these files in the project root:

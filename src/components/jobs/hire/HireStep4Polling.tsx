@@ -48,11 +48,11 @@ export function HireStep4Polling({ state, shortTxHash, writeTxHash }: HireStep4P
             Transaction submitted…
           </div>
           <div className="text-[12px] text-muted-foreground font-light leading-[1.6]">
-            Waiting for Polygon confirmation
+            Waiting for Base confirmation
           </div>
         </div>
         <a
-          href={`https://polygonscan.com/tx/${writeTxHash}`}
+          href={`https://basescan.org/tx/${writeTxHash}`}
           target="_blank"
           rel="noopener noreferrer"
           className="font-mono text-[11px] text-(--orange) hover:opacity-80 transition-opacity"

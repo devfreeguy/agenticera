@@ -73,7 +73,7 @@ export function Navbar({ className }: { className?: string }) {
         <Link href="/" className="flex items-center gap-2.5">
           <LogoMark size={30} />
           <span className="font-head text-[17px] font-semibold text-foreground">
-            AgentBank
+            AgentEra
           </span>
         </Link>
 

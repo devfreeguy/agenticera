@@ -22,20 +22,23 @@ type CreateJobResponse = {
 };
 
 export async function POST(
-  req: NextRequest
+  req: NextRequest,
 ): Promise<NextResponse<ApiSuccess<CreateJobResponse> | ApiError>> {
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json<ApiError>({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json<ApiError>(
+      { error: "Invalid JSON body" },
+      { status: 400 },
+    );
   }
 
   const parsed = createJobSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json<ApiError>(
       { error: parsed.error.issues[0]?.message ?? "Invalid request" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -45,12 +48,21 @@ export async function POST(
   try {
     const agent = await getAgentById(agentId);
     if (!agent) {
-      return NextResponse.json<ApiError>({ error: "Agent not found" }, { status: 404 });
+      return NextResponse.json<ApiError>(
+        { error: "Agent not found" },
+        { status: 404 },
+      );
     }
     if (agent.status !== AgentStatus.ACTIVE) {
-      return NextResponse.json<ApiError>({ error: "Agent is not active" }, { status: 404 });
+      return NextResponse.json<ApiError>(
+        { error: "Agent is not active" },
+        { status: 404 },
+      );
     }
-    console.log("[jobs:create] agent found, price:", agent.pricePerTask.toString());
+    console.log(
+      "[jobs:create] agent found, price:",
+      agent.pricePerTask.toString(),
+    );
 
     const job = await createJob({
       clientId,
@@ -70,24 +82,32 @@ export async function POST(
   } catch (error) {
     console.error("[jobs:create] error:", error);
     return NextResponse.json<ApiError>(
-      { error: error instanceof Error ? error.message : "Internal server error" },
-      { status: 500 }
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 },
     );
   }
 }
 
 export async function GET(
-  req: NextRequest
+  req: NextRequest,
 ): Promise<NextResponse<ApiSuccess<JobWithRelations[]> | ApiError>> {
   const walletAddress = req.nextUrl.searchParams.get("walletAddress");
   if (!walletAddress) {
-    return NextResponse.json<ApiError>({ error: "walletAddress query param is required" }, { status: 400 });
+    return NextResponse.json<ApiError>(
+      { error: "walletAddress query param is required" },
+      { status: 400 },
+    );
   }
 
   try {
     const user = await getUserByWallet(walletAddress);
     if (!user) {
-      return NextResponse.json<ApiError>({ error: "User not found" }, { status: 404 });
+      return NextResponse.json<ApiError>(
+        { error: "User not found" },
+        { status: 404 },
+      );
     }
 
     const jobs = await getJobsByClient(user.id);
@@ -95,9 +115,12 @@ export async function GET(
       data: jobs.map(serializeJob),
     });
   } catch (error) {
+    console.error("[GET /api/jobs] Failed to fetch jobs for wallet:", walletAddress, error instanceof Error ? error.message : error);
     return NextResponse.json<ApiError>(
-      { error: error instanceof Error ? error.message : "Internal server error" },
-      { status: 500 }
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 },
     );
   }
 }

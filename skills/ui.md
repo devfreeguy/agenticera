@@ -1,4 +1,4 @@
-# AgentBank — UI Rules
+# AgentEra — UI Rules
 
 ## Component library
 - Use shadcn/ui for all functional UI — never recreate a component it already provides

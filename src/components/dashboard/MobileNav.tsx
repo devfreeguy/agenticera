@@ -9,7 +9,7 @@ const NAV = [
   { href: "/dashboard", label: "Home", icon: LayoutGrid },
   { href: "/jobs", label: "Jobs", icon: Share2 },
   { href: "/transactions", label: "Txns", icon: FileText },
-  { href: "/profile", label: "Profile", icon: User },
+  { href: "/settings", label: "Profile", icon: User },
 ];
 
 export function MobileNav() {

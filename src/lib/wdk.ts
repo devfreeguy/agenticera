@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-const WDK_SERVICE_URL = "http://localhost:3001";
+const WDK_SERVICE_URL = process.env.WDK_SERVICE_URL ?? "http://localhost:3001";
 
 function wdkHeaders(): Record<string, string> {
   return {
@@ -15,6 +15,7 @@ async function wdkFetch<T>(
 ): Promise<T> {
   const res = await fetch(`${WDK_SERVICE_URL}${path}`, {
     ...options,
+    cache: "no-store",
     headers: { ...wdkHeaders(), ...(options?.headers ?? {}) },
   });
   if (!res.ok) {
@@ -53,10 +54,16 @@ export async function createAgentWallet(): Promise<{
 
 export async function getAgentBalance(walletAddress: string): Promise<string> {
   console.log("[wdk] getAgentBalance for:", walletAddress);
-  const data = await wdkFetch<{ balance: string; address: string }>(
-    `/wallet/balance/${walletAddress}`
-  );
-  return data.balance;
+  try {
+    const data = await wdkFetch<{ balance: string; address: string }>(
+      `/wallet/balance/${walletAddress}`
+    );
+    return data.balance;
+  } catch (err) {
+    console.error(`[wdk] Critical failure connecting to wallet service layer for balance check (address: ${walletAddress}):`, err instanceof Error ? err.message : String(err));
+    console.warn("[wdk] Gracefully falling back to 0.00 balance to preserve UI.");
+    return "0.00";
+  }
 }
 
 // ─── Send USDT ────────────────────────────────────────────────────────────────

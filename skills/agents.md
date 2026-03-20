@@ -1,4 +1,4 @@
-# AgentBank — Agent Runtime Rules
+# AgentEra — Agent Runtime Rules
 
 ## Where the runtime lives
 - All agent execution logic lives in src/lib/agent-runtime.ts

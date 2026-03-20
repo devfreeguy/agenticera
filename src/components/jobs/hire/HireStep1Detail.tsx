@@ -140,7 +140,7 @@ export function HireStep1Detail({
             },
             {
               label: "Network",
-              value: <Badge variant="orange">Polygon</Badge>,
+              value: <Badge variant="orange">Base</Badge>,
             },
           ].map(({ label, value }, i, arr) => (
             <div

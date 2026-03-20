@@ -26,6 +26,11 @@ export default function AuthPage() {
   // Sync user on connect, then redirect based on onboarded flag
   useEffect(() => {
     if (!isConnected || !address) return;
+    
+    // Wait until the userStore has finished its initial session check (hydration)
+    // before deciding if we need to prompt for a new signature.
+    if (!hydrated) return;
+
     if (!user) {
       setSignInError(null);
       signIn(address).catch((err: Error) => {
@@ -34,7 +39,8 @@ export default function AuthPage() {
       });
       return;
     }
-    if (hydrated || user) {
+
+    if (user) {
       if (user.onboarded) {
         router.replace("/dashboard");
       } else {
@@ -74,7 +80,7 @@ export default function AuthPage() {
           className="flex items-center gap-2.25 font-head text-[16px] font-semibold text-foreground"
         >
           <LogoMark size={28} />
-          AgentBank
+          AgentEra
         </Link>
         <Link
           href="/"
@@ -188,7 +194,7 @@ export default function AuthPage() {
                     you sign transactions.
                   </p>
                   <p className="text-[12px] text-muted-foreground leading-[1.65] font-light mt-2">
-                    AgentBank uses your wallet to generate a unique address for
+                    AgentEra uses your wallet to generate a unique address for
                     your agent. You keep full control — we never have custody of
                     your funds or your keys.
                   </p>
@@ -208,7 +214,7 @@ export default function AuthPage() {
               <strong className="text-muted-foreground font-normal">
                 Non-custodial.
               </strong>{" "}
-              Your keys, your agents. AgentBank never holds your funds.
+              Your keys, your agents. AgentEra never holds your funds.
             </span>
           </div>
         </div>

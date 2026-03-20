@@ -31,7 +31,7 @@ const INITIAL_STEPS: DeployStep[] = [
     icon: Wallet,
     status: "pending",
     activeLabel: "Registering on-chain…",
-    activeSub: "Broadcasting wallet registration to Polygon",
+    activeSub: "Broadcasting wallet registration to Base",
   },
   {
     id: 3,
@@ -91,7 +91,7 @@ export function DeployingState({ onComplete }: DeployingStateProps) {
           {active?.activeLabel ?? "Deploying agent…"}
         </div>
         <div className="text-[12px] text-muted-foreground font-light mt-0.5 leading-[1.6]">
-          {active?.activeSub ?? "Generating wallet on Polygon"}
+          {active?.activeSub ?? "Generating wallet on Base"}
         </div>
       </div>
 

@@ -5,49 +5,85 @@ import { useAgentStore } from "@/store/agentStore";
 import { useJobStore } from "@/store/jobStore";
 import { useTransactionStore } from "@/store/transactionStore";
 
+// This exists outside the React render cycle. When 12 components mount at the exact
+// same millisecond, the first one flips this to true, and the other 11 instantly abort.
+let isGlobalAuthTriggered = false;
+
 export function useUser() {
   const { address, isConnected, status } = useAccount();
   const { signMessageAsync } = useSignMessage();
-  const { user, isLoading, hydrated, clearUser, syncUser, fetchUser, markOnboarded } = useUserStore();
+  const {
+    user,
+    isLoading,
+    hydrated,
+    hasAttemptedAuth,
+    clearUser,
+    syncUser,
+    fetchUser,
+    markOnboarded,
+    setHasAttemptedAuth,
+  } = useUserStore();
   const clearAgents = useAgentStore((s) => s.clearAgents);
   const clearJobs = useJobStore((s) => s.clearJobs);
   const clearTransactions = useTransactionStore((s) => s.clearTransactions);
 
-  // True once wagmi has finished reconnecting — safe to act on isConnected
   const isHydrated = status !== "connecting" && status !== "reconnecting";
-
   const previousAddress = useRef<string | undefined>(undefined);
 
-  // Keep signMessageAsync in a ref so effects don't need it as a dependency
   const signMessageRef = useRef(signMessageAsync);
   useEffect(() => {
     signMessageRef.current = signMessageAsync;
   }, [signMessageAsync]);
 
-  // Guard against concurrent sign-in calls (prevents the 200+ popup storm)
-  const isSigningRef = useRef(false);
+  const signIn = useCallback(
+    async (walletAddress: string) => {
+      try {
+        await syncUser(walletAddress, signMessageRef.current);
+      } catch (error) {
+        // If the user rejects the signature in MetaMask, unlock it so they can try again later
+        isGlobalAuthTriggered = false;
+        setHasAttemptedAuth(false);
+      }
+    },
+    [syncUser, setHasAttemptedAuth],
+  );
 
-  // Stable signIn function that won't cause useEffect re-fires
-  const signIn = useCallback(async (walletAddress: string) => {
-    if (isSigningRef.current) return; // already signing — bail
-    isSigningRef.current = true;
-    try {
-      await syncUser(walletAddress, signMessageRef.current);
-    } finally {
-      isSigningRef.current = false;
-    }
-  }, [syncUser]);
-
-  // Re-fetch existing user on page refresh (no sign required — session cookie handles auth)
+  // Re-fetch existing user / Trigger Sign-In
   useEffect(() => {
-    if (isConnected && address && !user) {
-      fetchUser(address);
-    }
-  }, [isConnected, address, user, fetchUser]);
+    // If another component already triggered this, OR we've already tried, hit the brakes!
+    if (isGlobalAuthTriggered || hasAttemptedAuth) return;
 
-  // Wallet disconnected — wipe all state
+    if (isConnected && address && isHydrated && !user && !isLoading) {
+      isGlobalAuthTriggered = true; // 🔒 Lock it instantly for all other components
+      setHasAttemptedAuth(true); // Update Zustand for UI consistency
+
+      const run = async () => {
+        await fetchUser(address);
+
+        // Use getState() to get the freshest data immediately after fetch
+        const currentUser = useUserStore.getState().user;
+        if (!currentUser) {
+          await signIn(address);
+        }
+      };
+      run();
+    }
+  }, [
+    isConnected,
+    address,
+    isHydrated,
+    user,
+    isLoading,
+    hasAttemptedAuth,
+    fetchUser,
+    signIn,
+    setHasAttemptedAuth,
+  ]);
+
+  // Wallet disconnected — wipe all state AND reset the lock
   useEffect(() => {
     if (!address) {
+      isGlobalAuthTriggered = false; // 🔓 Unlock
       clearUser();
       clearAgents();
       clearJobs();
@@ -55,21 +91,49 @@ export function useUser() {
     }
   }, [address, clearUser, clearAgents, clearJobs, clearTransactions]);
 
-  // Account switched — clear stale state and re-authenticate
+  // Account switched — clear stale state and re-authenticate safely
   useEffect(() => {
     const prev = previousAddress.current;
     previousAddress.current = address;
 
     if (prev && address && prev !== address) {
+      isGlobalAuthTriggered = true; // 🔒 Lock immediately for the new account
+      setHasAttemptedAuth(true);
+
       clearUser();
       clearAgents();
       clearJobs();
       clearTransactions();
-      signIn(address);
+
+      const runSwitch = async () => {
+        await fetchUser(address);
+        const currentUser = useUserStore.getState().user;
+        if (!currentUser) {
+          await signIn(address);
+        }
+      };
+      runSwitch();
     }
-  // signIn is stable (useCallback), signMessageAsync is accessed via ref
-  }, [address, clearUser, clearAgents, clearJobs, clearTransactions, signIn]);
+  }, [
+    address,
+    clearUser,
+    clearAgents,
+    clearJobs,
+    clearTransactions,
+    signIn,
+    setHasAttemptedAuth,
+    fetchUser,
+  ]);
 
-  return { user, isLoading, hydrated, isConnected, isHydrated, address, signIn, clearUser, markOnboarded };
+  return {
+    user,
+    isLoading,
+    hydrated,
+    isConnected,
+    isHydrated,
+    address,
+    signIn,
+    clearUser,
+    markOnboarded,
+  };
 }
-

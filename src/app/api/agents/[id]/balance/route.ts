@@ -10,12 +10,15 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiSuccess<BalanceResponse> | ApiError>> {
   const { id } = await params;
+  console.log("[api:balance] checking balance for agent id:", id);
 
   try {
     const agent = await getAgentById(id);
     if (!agent) {
-      return NextResponse.json<ApiError>({ error: "Agent not found" }, { status: 404 });
+      console.warn("[api:balance] agent not found in DB:", id);
+      return NextResponse.json<ApiError>({ error: "Agent not found" }, { status: 488 });
     }
+    console.log("[api:balance] agent found, wallet:", agent.walletAddress);
 
     const balance = await getAgentBalance(agent.walletAddress);
     return NextResponse.json<ApiSuccess<BalanceResponse>>({

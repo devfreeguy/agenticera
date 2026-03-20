@@ -50,7 +50,7 @@ export function DeploySuccessState({ walletAddress }: DeploySuccessStateProps) {
         </div>
         <div className="flex items-center gap-1.5 mt-2 text-[11px] text-(--green)">
           <Check size={12} strokeWidth={1.8} />
-          Confirmed on Polygon
+          Confirmed on Base
         </div>
       </div>
 

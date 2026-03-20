@@ -53,7 +53,7 @@ export function DashboardSidebar({ walletAddress }: DashboardSidebarProps) {
         className="flex items-center gap-2.25 px-5 py-5.5 pb-5 border-b border-border font-head text-[16px] font-semibold text-foreground no-underline"
       >
         <LogoMark size={28} />
-        AgentBank
+        AgentEra
       </Link>
 
       {/* Nav */}
