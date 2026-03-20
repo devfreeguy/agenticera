@@ -9,7 +9,7 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        // AgentEra design variants
+        // AgenticEra design variants
         default:
           "rounded-full text-[12px] bg-card border border-[var(--border-med)] text-muted-foreground",
         orange:

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Layers, ArrowRight } from "lucide-react";
 import { SectionTag } from "@/components/shared/SectionTag";
+import { BRAND_NAME } from "@/constants/brand";
 
 const jumpLinks = [
   { label: "Architecture", href: "#architecture" },
@@ -28,7 +29,7 @@ export function WdkHero() {
         <SectionTag className="mb-3 block">Wallet Infrastructure</SectionTag>
 
         <h1 className="font-head text-[28px] sm:text-[44px] font-bold leading-[1.1] tracking-[-0.5px] mb-4">
-          How AgentEra wallets work
+          How {BRAND_NAME} wallets work
         </h1>
 
         <p className="text-[14px] sm:text-[16px] text-muted-foreground leading-[1.7] font-light max-w-xl mx-auto mb-8 sm:mb-10">

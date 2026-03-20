@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { BRAND_NAME } from "@/constants/brand";
 
 interface LogoMarkProps {
   /** "default" = logo.webp (orange bg, for use on dark surfaces as a brand icon)
@@ -22,7 +23,7 @@ export function LogoMark({
   return (
     <Image
       src={src}
-      alt="AgentEra"
+      alt={BRAND_NAME}
       width={size}
       height={size}
       className={cn("shrink-0", className)}

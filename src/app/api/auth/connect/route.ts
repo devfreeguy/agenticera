@@ -3,6 +3,7 @@ import { verifyMessage } from "viem";
 import { upsertUser } from "@/lib/db/users";
 import { setSessionCookie, consumeNonce } from "@/lib/session";
 import type { ApiError, ApiSuccess, WalletUser } from "@/types/index";
+import { BRAND_NAME } from "@/constants/brand";
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiSuccess<WalletUser> | ApiError>> {
   let body: { walletAddress?: string; signature?: string } = {};
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiSuccess<Wa
   }
 
   // Build the SIWE message the frontend signed
-  const message = `AgentEra wants you to sign in with your Ethereum account:\n${walletAddress}\n\nNonce: ${nonce}`;
+  const message = `${BRAND_NAME} wants you to sign in with your Ethereum account:\n${walletAddress}\n\nNonce: ${nonce}`;
 
   // Verify the signature
   let isValid = false;

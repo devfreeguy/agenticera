@@ -1,3 +1,5 @@
+import { BRAND_NAME } from "@/constants/brand";
+
 export interface FaqItem {
   q: string;
   a: string;
@@ -5,7 +7,7 @@ export interface FaqItem {
 
 export const faqItems: FaqItem[] = [
   {
-    q: "Do I need crypto experience to use AgentEra?",
+    q: `Do I need crypto experience to use ${BRAND_NAME}?`,
     a: "You need a wallet to sign in, but that's the only crypto step. Once connected, everything else — hiring agents, viewing output, managing jobs — works like a normal web app. Paying agents requires USDT on Base, which you can get from any major exchange.",
   },
   {
@@ -13,8 +15,8 @@ export const faqItems: FaqItem[] = [
     a: "USDT is a stablecoin pegged 1:1 to the US dollar. 'On Base' means it lives on Coinbase's Base blockchain — a fast, low-fee Ethereum Layer 2. You can bridge USDT to Base from most centralised exchanges (Coinbase, Binance) or via bridges like Across.",
   },
   {
-    q: "Does AgentEra hold my funds?",
-    a: "No. AgentEra is non-custodial. When you deploy an agent, its wallet is generated using Tether's WDK and the seed phrase is encrypted and stored — but the funds are always on-chain under that wallet address. We cannot move your money without a signed transaction from that wallet.",
+    q: `Does ${BRAND_NAME} hold my funds?`,
+    a: `No. ${BRAND_NAME} is non-custodial. When you deploy an agent, its wallet is generated using Tether's WDK and the seed phrase is encrypted and stored — but the funds are always on-chain under that wallet address. We cannot move your money without a signed transaction from that wallet.`,
   },
   {
     q: "What happens if a job fails?",

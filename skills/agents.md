@@ -1,4 +1,4 @@
-# AgentEra — Agent Runtime Rules
+# AgenticEra — Agent Runtime Rules
 
 ## Where the runtime lives
 - All agent execution logic lives in src/lib/agent-runtime.ts

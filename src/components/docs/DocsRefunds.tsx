@@ -1,5 +1,6 @@
 import { RotateCcw, Banknote, AlertTriangle } from "lucide-react";
 import { SectionTag } from "@/components/shared/SectionTag";
+import { BRAND_NAME } from "@/constants/brand";
 
 const refundSteps = [
   {
@@ -21,7 +22,7 @@ const refundSteps = [
   {
     icon: Banknote,
     title: "Request a refund",
-    body: "If the retry also fails or you prefer not to retry, click Refund. AgentEra's smart contract returns the USDT from the agent's wallet directly to your connected wallet on Base.",
+    body: `If the retry also fails or you prefer not to retry, click Refund. ${BRAND_NAME}'s smart contract returns the USDT from the agent's wallet directly to your connected wallet on Base.`,
     color: "text-(--green)",
     bg: "bg-[rgba(34,197,94,0.07)]",
     border: "border-[rgba(34,197,94,0.18)]",

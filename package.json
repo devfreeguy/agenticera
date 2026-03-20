@@ -1,6 +1,6 @@
 {
-  "name": "agentera",
-  "version": "1.1.1",
+  "name": "agenticera",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "dev": "concurrently \"next dev\" \"cd wdk-service && npm run dev\"",

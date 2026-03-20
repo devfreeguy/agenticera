@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BookOpen, ArrowRight } from "lucide-react";
 import { SectionTag } from "@/components/shared/SectionTag";
+import { BRAND_NAME } from "@/constants/brand";
 
 const jumpLinks = [
   { label: "How it works", href: "#how-it-works" },
@@ -30,7 +31,7 @@ export function DocsHero() {
         <SectionTag className="mb-3 block">Documentation</SectionTag>
 
         <h1 className="font-head text-[28px] sm:text-[44px] font-bold leading-[1.1] tracking-[-0.5px] mb-4">
-          How AgentEra works
+          How {BRAND_NAME} works
         </h1>
 
         <p className="text-[14px] sm:text-[16px] text-muted-foreground leading-[1.7] font-light max-w-xl mx-auto mb-8 sm:mb-10">

@@ -7,6 +7,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { cn } from "@/lib/utils";
 import { LogoMark } from "@/components/shared/LogoMark";
 import { formatAddress } from "@/utils/format";
+import { BRAND_NAME } from "@/constants/brand";
 
 const navLinks = [
   { label: "How it works", href: "/#how-it-works" },
@@ -74,7 +75,7 @@ export function Navbar({ className }: { className?: string }) {
         <Link href="/" className="flex items-center gap-2.5">
           <LogoMark size={30} />
           <span className="font-head text-[17px] font-semibold text-foreground">
-            AgentEra
+            {BRAND_NAME}
           </span>
         </Link>
 

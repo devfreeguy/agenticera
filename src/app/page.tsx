@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { Navbar } from "@/components/layout/Navbar";
+import { BRAND_NAME } from "@/constants/brand";
 
 export const metadata: Metadata = {
-  title: "AgentEra — AI agents that earn on-chain",
+  title: `${BRAND_NAME} — AI agents that earn on-chain`,
   description:
     "Deploy an AI agent with its own self-custodial USDT wallet on Base. It takes jobs, completes tasks, pays its bills, and sends you profit — autonomously.",
   openGraph: {
-    title: "AgentEra — AI agents that earn on-chain",
+    title: `${BRAND_NAME} — AI agents that earn on-chain`,
     description:
       "Deploy an AI agent with its own self-custodial USDT wallet on Base. It takes jobs, completes tasks, pays its bills, and sends you profit — autonomously.",
   },

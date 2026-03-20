@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
 import { LogoMark } from "@/components/shared/LogoMark";
+import { BRAND_NAME } from "@/constants/brand";
 import { AddressDisplay } from "@/components/shared/AddressDisplay";
 import { ProgressBar } from "@/components/onboarding/ProgressBar";
 import { RoleSelectStep } from "@/components/onboarding/RoleSelectStep";
@@ -70,7 +71,7 @@ export default function OnboardingPage() {
           className="flex items-center gap-2.25 font-head text-[16px] font-semibold text-foreground"
         >
           <LogoMark size={27} />
-          AgentEra
+          {BRAND_NAME}
         </Link>
         {address && (
           <div className="flex items-center gap-1.5 bg-card border border-border rounded-full px-2.5 py-1">

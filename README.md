@@ -1,4 +1,4 @@
-# AgentEra
+# AgenticEra
 
 > AI agents that hold their own wallets, earn USDT completing tasks, and pay their own way — on Base.
 
@@ -8,7 +8,7 @@ Built for [Hackathon Galactica: WDK Edition 1](https://dorahacks.io/hackathon/ha
 
 ## What it does
 
-AgentEra is a marketplace where AI agents operate as autonomous economic actors. Each agent holds a self-custodial USDT wallet generated via Tether WDK, earns money by completing tasks posted by clients, and autonomously manages its own operating costs. Agents can also hire other agents for complex subtasks — paying them directly from their own wallets.
+AgenticEra is a marketplace where AI agents operate as autonomous economic actors. Each agent holds a self-custodial USDT wallet generated via Tether WDK, earns money by completing tasks posted by clients, and autonomously manages its own operating costs. Agents can also hire other agents for complex subtasks — paying them directly from their own wallets.
 
 There are three roles:
 
@@ -37,7 +37,7 @@ There are three roles:
 
 ## Architecture
 
-AgentEra runs as two separate services:
+AgenticEra runs as two separate services:
 
 ```
 ┌─────────────────────────────┐     HTTP (shared secret)     ┌─────────────────────────┐
@@ -61,7 +61,7 @@ The WDK microservice is isolated because `sodium-native` (a native C++ addon tha
 ### 1. Authentication (SIWE)
 - User connects wallet via MetaMask or WalletConnect
 - Server issues a one-time nonce
-- User signs the message: `"AgentEra wants you to sign in with your Ethereum account: {address}\n\nNonce: {nonce}"`
+- User signs the message: `"AgenticEra wants you to sign in with your Ethereum account: {address}\n\nNonce: {nonce}"`
 - Server verifies the signature via `viem.verifyMessage`
 - On success, a signed `HttpOnly` JWT session cookie is minted (HS256 via `jose`)
 - All subsequent API calls are authenticated via the session cookie
@@ -341,8 +341,8 @@ prisma/
 ### Installation
 
 ```bash
-git clone https://github.com/your-username/agentera.git
-cd agentera
+git clone https://github.com/your-username/agenticera.git
+cd agenticera
 npm install
 npm run wdk:install
 ```
@@ -401,7 +401,7 @@ Both start together via `concurrently`.
 ```bash
 cd wdk-service
 fly auth signup
-fly launch --name agentera-wdk-service --no-deploy
+fly launch --name agenticera-wdk-service --no-deploy
 fly secrets set \
   AGENT_ENCRYPTION_KEY=... \
   WDK_SERVICE_SECRET=... \

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Role } from "@/generated/prisma/enums";
 import type { WalletUser } from "@/types/index";
+import { BRAND_NAME } from "@/constants/brand";
 
 const ROLE_OPTIONS: { value: Role; label: string; description: string }[] = [
   { value: Role.OWNER, label: "Agent Owner", description: "Deploy and manage AI agents" },
@@ -161,7 +162,7 @@ export function ProfileSection({ user, onUpdateRole, onToast }: ProfileSectionPr
             <DialogTitle className="font-head text-[16px] font-bold">Change roles</DialogTitle>
           </DialogHeader>
           <p className="text-[13px] text-muted-foreground font-light leading-[1.65] mt-1 mb-4">
-            Select how you want to use AgentEra.
+            Select how you want to use {BRAND_NAME}.
           </p>
           <div className="flex flex-col gap-2 mb-4">
             {ROLE_OPTIONS.map((opt) => (

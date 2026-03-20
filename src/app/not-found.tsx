@@ -3,9 +3,10 @@ import { Home, Search } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { PublicFooter } from "@/components/landing/PublicFooter";
 import { Button } from "@/components/ui/button";
+import { BRAND_NAME } from "@/constants/brand";
 
 export const metadata = {
-  title: "Page not found — AgentEra",
+  title: `Page not found — ${BRAND_NAME}`,
 };
 
 export default function NotFound() {

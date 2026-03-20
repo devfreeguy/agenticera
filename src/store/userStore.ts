@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import axiosClient from "@/lib/axiosClient";
 import type { WalletUser } from "@/types/index";
+import { BRAND_NAME } from "@/constants/brand";
 
 interface UserState {
   user: WalletUser | null;
@@ -60,7 +61,7 @@ export const useUserStore = create<UserState & UserActions>()(
         if (!nonce) throw new Error("Failed to get auth nonce");
 
         // Step 2: Build the SIWE message and sign it with the user's wallet
-        const message = `AgentEra wants you to sign in with your Ethereum account:\n${walletAddress}\n\nNonce: ${nonce}`;
+        const message = `${BRAND_NAME} wants you to sign in with your Ethereum account:\n${walletAddress}\n\nNonce: ${nonce}`;
         const signature = await signMessageAsync({ message });
 
         // Step 3: POST the signature to the server for verification

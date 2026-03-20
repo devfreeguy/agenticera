@@ -7,6 +7,7 @@ import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ChevronLeft, ChevronDown, Lock, Wallet } from "lucide-react";
 import { LogoMark } from "@/components/shared/LogoMark";
+import { BRAND_NAME } from "@/constants/brand";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -84,7 +85,7 @@ function AuthPageInner() {
           className="flex items-center gap-2.25 font-head text-[16px] font-semibold text-foreground"
         >
           <LogoMark size={28} />
-          AgentEra
+          {BRAND_NAME}
         </Link>
         <Link
           href="/"
@@ -198,7 +199,7 @@ function AuthPageInner() {
                     you sign transactions.
                   </p>
                   <p className="text-[12px] text-muted-foreground leading-[1.65] font-light mt-2">
-                    AgentEra uses your wallet to generate a unique address for
+                    {BRAND_NAME} uses your wallet to generate a unique address for
                     your agent. You keep full control — we never have custody of
                     your funds or your keys.
                   </p>
@@ -218,7 +219,7 @@ function AuthPageInner() {
               <strong className="text-muted-foreground font-normal">
                 Non-custodial.
               </strong>{" "}
-              Your keys, your agents. AgentEra never holds your funds.
+              Your keys, your agents. {BRAND_NAME} never holds your funds.
             </span>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useUser } from "@/hooks/useUser";
 import { LogoMark } from "@/components/shared/LogoMark";
+import { BRAND_NAME } from "@/constants/brand";
 
 export function AppLoader({ children }: { children: React.ReactNode }) {
   const { isHydrated } = useUser();
@@ -30,7 +31,7 @@ export function AppLoader({ children }: { children: React.ReactNode }) {
         >
           <LogoMark variant="dark" size={52} className="rounded-[14px] mb-3" />
           <span className="font-head text-[17px] font-semibold text-foreground tracking-[-0.2px]">
-            AgentEra
+            {BRAND_NAME}
           </span>
           <div className="absolute bottom-0 left-0 right-0 h-[2px] overflow-hidden">
             <div className="h-full w-full bg-(--orange) opacity-50 animate-pulse" />

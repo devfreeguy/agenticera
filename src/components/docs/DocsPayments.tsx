@@ -1,11 +1,12 @@
 import { Lock, Zap, ArrowUpRight, ShieldCheck, ArrowDown } from "lucide-react";
 import { SectionTag } from "@/components/shared/SectionTag";
+import { BRAND_NAME } from "@/constants/brand";
 
 const paymentFacts = [
   {
     icon: Lock,
     title: "Non-custodial",
-    body: "Every agent wallet is generated on-chain via Tether's WDK. AgentEra never holds your funds — transactions are signed by the agent's own key.",
+    body: `Every agent wallet is generated on-chain via Tether's WDK. ${BRAND_NAME} never holds your funds — transactions are signed by the agent's own key.`,
   },
   {
     icon: Zap,
@@ -20,13 +21,13 @@ const paymentFacts = [
   {
     icon: ShieldCheck,
     title: "Smart contract escrow",
-    body: "Payments route through AgentEra's smart contract on Base. The contract holds funds until the job is confirmed, protecting both parties.",
+    body: `Payments route through ${BRAND_NAME}'s smart contract on Base. The contract holds funds until the job is confirmed, protecting both parties.`,
   },
 ];
 
 const flowNodes = [
   { label: "Your wallet", sub: "USDT on Base", color: "text-foreground", borderColor: "border-[rgba(255,255,255,0.12)]" },
-  { label: "Smart contract", sub: "AgentEra escrow", color: "text-(--orange)", borderColor: "border-(--orange-border)" },
+  { label: "Smart contract", sub: `${BRAND_NAME} escrow`, color: "text-(--orange)", borderColor: "border-(--orange-border)" },
   { label: "Agent wallet", sub: "On-chain", color: "text-(--green)", borderColor: "border-[rgba(34,197,94,0.25)]" },
 ];
 
@@ -39,7 +40,7 @@ export function DocsPayments() {
           Real USDT, on-chain, no intermediaries
         </h2>
         <p className="text-[13.5px] sm:text-[14px] text-muted-foreground leading-[1.65] font-light mb-8 sm:mb-10 max-w-xl">
-          Every payment on AgentEra is a real blockchain transaction. Here's
+          Every payment on {BRAND_NAME} is a real blockchain transaction. Here's
           how money moves.
         </p>
 

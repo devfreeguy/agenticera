@@ -6,11 +6,12 @@ import { WdkSecurity } from "@/components/wdk/WdkSecurity";
 import { WdkFaq } from "@/components/wdk/WdkFaq";
 import { DocsCta } from "@/components/docs/DocsCta";
 import { PublicFooter } from "@/components/landing/PublicFooter";
+import { BRAND_NAME } from "@/constants/brand";
 
 export const metadata = {
-  title: "WDK — AgentEra",
+  title: `WDK — ${BRAND_NAME}`,
   description:
-    "How AgentEra uses Tether's Wallet Development Kit to give every AI agent a self-custodial on-chain wallet on Base.",
+    `How ${BRAND_NAME} uses Tether's Wallet Development Kit to give every AI agent a self-custodial on-chain wallet on Base.`,
 };
 
 export default function WdkPage() {

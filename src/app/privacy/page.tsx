@@ -7,25 +7,26 @@ import {
   LegalStrong,
   LegalNote,
 } from "@/components/legal/LegalSection";
+import { BRAND_NAME } from "@/constants/brand";
 
 export const metadata = {
-  title: "Privacy Policy — AgentEra",
-  description: "AgentEra privacy policy — what data we collect, how we use it, and your rights.",
+  title: `Privacy Policy — ${BRAND_NAME}`,
+  description: `${BRAND_NAME} privacy policy — what data we collect, how we use it, and your rights.`,
 };
 
 export default function PrivacyPage() {
   return (
     <LegalLayout
       title="Privacy Policy"
-      subtitle="How AgentEra collects, uses, and protects your information."
+      subtitle={`How ${BRAND_NAME} collects, uses, and protects your information.`}
       lastUpdated="March 20, 2026"
     >
       <LegalSection id="intro" title="1. Introduction">
         <LegalP>
-          AgentEra ("we", "us") is committed to protecting your privacy. This policy explains what information we collect when you use the platform, how we use it, and your rights regarding that information.
+          {BRAND_NAME} ("we", "us") is committed to protecting your privacy. This policy explains what information we collect when you use the platform, how we use it, and your rights regarding that information.
         </LegalP>
         <LegalNote>
-          <LegalStrong>No email, no KYC.</LegalStrong> AgentEra does not require you to create an account with an email address or submit identity documents. Authentication is wallet-based only.
+          <LegalStrong>No email, no KYC.</LegalStrong> {BRAND_NAME} does not require you to create an account with an email address or submit identity documents. Authentication is wallet-based only.
         </LegalNote>
       </LegalSection>
 
@@ -74,7 +75,7 @@ export default function PrivacyPage() {
 
       <LegalSection id="third-party" title="5. Third-Party Services">
         <LegalP>
-          AgentEra uses the following third-party services to operate. When you use the platform, your data may be processed by:
+          {BRAND_NAME} uses the following third-party services to operate. When you use the platform, your data may be processed by:
         </LegalP>
         <LegalUl>
           <LegalLi>
@@ -100,7 +101,7 @@ export default function PrivacyPage() {
           We retain your account data (wallet address, job history, agent configuration) for as long as your account is active. If you request account deletion, we will remove your personal data from our systems within 30 days, except where we are required to retain it by law.
         </LegalP>
         <LegalP>
-          Note that on-chain data (transaction records, wallet addresses) is permanently recorded on the blockchain and cannot be deleted by AgentEra.
+          Note that on-chain data (transaction records, wallet addresses) is permanently recorded on the blockchain and cannot be deleted by {BRAND_NAME}.
         </LegalP>
       </LegalSection>
 
@@ -115,7 +116,7 @@ export default function PrivacyPage() {
           <LegalLi>HTTPS-only communication for all platform endpoints.</LegalLi>
         </LegalUl>
         <LegalP>
-          No system is completely secure. You are responsible for the security of your own wallet and private keys. AgentEra cannot recover lost wallets or reverse unauthorised transactions.
+          No system is completely secure. You are responsible for the security of your own wallet and private keys. {BRAND_NAME} cannot recover lost wallets or reverse unauthorised transactions.
         </LegalP>
       </LegalSection>
 
@@ -137,7 +138,7 @@ export default function PrivacyPage() {
 
       <LegalSection id="cookies" title="9. Cookies">
         <LegalP>
-          AgentEra uses a single HttpOnly authentication cookie to maintain your session. This cookie:
+          {BRAND_NAME} uses a single HttpOnly authentication cookie to maintain your session. This cookie:
         </LegalP>
         <LegalUl>
           <LegalLi>Is strictly necessary for the platform to function.</LegalLi>
@@ -158,7 +159,7 @@ export default function PrivacyPage() {
 
       <LegalSection id="contact" title="11. Contact">
         <LegalP>
-          If you have questions about this policy, your data, or wish to exercise your rights, please contact us through the AgentEra platform or the contact details listed on our website.
+          If you have questions about this policy, your data, or wish to exercise your rights, please contact us through the {BRAND_NAME} platform or the contact details listed on our website.
         </LegalP>
       </LegalSection>
     </LegalLayout>

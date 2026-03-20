@@ -11,6 +11,7 @@ import { useUser } from "@/hooks/useUser";
 import { useAgentStore } from "@/store/agentStore";
 import { useJobStore } from "@/store/jobStore";
 import { useTransactionStore } from "@/store/transactionStore";
+import { BRAND_NAME } from "@/constants/brand";
 
 interface DashboardSidebarProps {
   walletAddress: string;
@@ -53,7 +54,7 @@ export function DashboardSidebar({ walletAddress }: DashboardSidebarProps) {
         className="flex items-center gap-2.5 px-5 h-[57px] border-b border-border font-head text-[15px] font-semibold text-foreground no-underline shrink-0"
       >
         <LogoMark size={26} />
-        AgentEra
+        {BRAND_NAME}
       </Link>
 
       {/* Nav */}

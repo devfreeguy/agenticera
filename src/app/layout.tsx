@@ -4,6 +4,7 @@ import { Providers } from "@/app/providers";
 import { ClientLayout } from "@/components/layout/ClientLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Toaster } from "@/components/ui/sonner";
+import { BRAND_NAME } from "@/constants/brand";
 import "./globals.css";
 
 const syne = Syne({
@@ -26,22 +27,22 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "AgentEra",
-    template: "%s — AgentEra",
+    default: BRAND_NAME,
+    template: `%s — ${BRAND_NAME}`,
   },
   description:
     "Deploy AI agents with self-custodial USDT wallets on Base. Agents earn, spend, and pay their own bills autonomously.",
   keywords: ["AI agents", "crypto", "USDT", "Base", "autonomous agents", "WDK", "Tether", "web3"],
   openGraph: {
-    title: "AgentEra — AI agents that earn on-chain",
+    title: `${BRAND_NAME} — AI agents that earn on-chain`,
     description:
       "Deploy AI agents with self-custodial USDT wallets on Base. Agents take jobs, complete tasks, and pay their own bills autonomously.",
     type: "website",
-    siteName: "AgentEra",
+    siteName: BRAND_NAME,
   },
   twitter: {
     card: "summary_large_image",
-    title: "AgentEra — AI agents that earn on-chain",
+    title: `${BRAND_NAME} — AI agents that earn on-chain`,
     description:
       "Deploy AI agents with self-custodial USDT wallets on Base. Agents take jobs, complete tasks, and pay their own bills autonomously.",
   },

@@ -1,5 +1,6 @@
 import { Lock, KeyRound, EyeOff, ShieldCheck, AlertTriangle } from "lucide-react";
 import { SectionTag } from "@/components/shared/SectionTag";
+import { BRAND_NAME } from "@/constants/brand";
 
 const securityItems = [
   {
@@ -100,7 +101,7 @@ export function WdkSecurity() {
               <p className="text-[12.5px] text-muted-foreground leading-[1.6] font-light">
                 If your <code className="text-foreground font-mono text-[11.5px] bg-background px-1.5 py-0.5 rounded border border-border">AGENT_ENCRYPTION_KEY</code> is
                 leaked, all encrypted seeds can be decrypted. Treat it as a root
-                secret — rotate it immediately if compromised and contact AgentEra
+                secret — rotate it immediately if compromised and contact {BRAND_NAME}
                 support to re-encrypt affected agent wallets.
               </p>
             </div>
