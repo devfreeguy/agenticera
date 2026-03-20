@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { ChevronLeft, ChevronDown, Lock, Wallet, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronDown, Lock, Wallet, Loader2, AlertCircle } from "lucide-react";
 import { LogoMark } from "@/components/shared/LogoMark";
 import { BRAND_NAME } from "@/constants/brand";
 import { cn } from "@/lib/utils";
@@ -36,17 +36,18 @@ function AuthPageInner() {
     if (!hydrated) return;
 
     if (!user) {
-      // Guard against concurrent calls caused by wagmi firing multiple times
+      // Guard: if already signing or user has dismissed, do not re-prompt
       if (signingRef.current) return;
       signingRef.current = true;
       setSignInError(null);
-      signIn(address)
-        .catch((err: Error) => {
-          setSignInError(err?.message?.includes("User rejected") ? "Signature cancelled. Please try again." : "Authentication failed. Please reconnect.");
-        })
-        .finally(() => {
-          signingRef.current = false;
-        });
+      signIn(address).catch((err: Error) => {
+        // Keep signingRef = true so wagmi re-fires don't auto-prompt again
+        setSignInError(
+          err?.message?.includes("User rejected")
+            ? "You cancelled the signature request."
+            : "Authentication failed. Please try again.",
+        );
+      });
       return;
     }
 
@@ -61,8 +62,8 @@ function AuthPageInner() {
     }
   }, [isConnected, address, user, hydrated, signIn, router]);
 
-  // While connected and waiting for signature (or redirecting), show overlay
-  if (isConnected && !signInError) {
+  // While connected: show overlay for both pending and error states
+  if (isConnected) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-6">
         <div
@@ -81,18 +82,45 @@ function AuthPageInner() {
           }}
         />
         <div className="relative z-10 flex flex-col items-center gap-5 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-sidebar border border-(--border-med) flex items-center justify-center">
-            <Wallet size={26} className="text-(--orange)" strokeWidth={1.6} />
-          </div>
-          <div>
-            <h2 className="font-head text-[20px] font-bold tracking-[-0.2px] mb-1.5">
-              Confirm signature
-            </h2>
-            <p className="text-[13px] text-muted-foreground font-light leading-[1.65] max-w-[260px]">
-              Check your wallet — a signature request is waiting for you.
-            </p>
-          </div>
-          <Loader2 size={18} className="text-(--orange) animate-spin mt-1" strokeWidth={1.8} />
+          {signInError ? (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.2)] flex items-center justify-center">
+                <AlertCircle size={26} className="text-red-400" strokeWidth={1.6} />
+              </div>
+              <div>
+                <h2 className="font-head text-[20px] font-bold tracking-[-0.2px] mb-1.5">
+                  Signature cancelled
+                </h2>
+                <p className="text-[13px] text-muted-foreground font-light leading-[1.65] max-w-[260px]">
+                  {signInError}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  signingRef.current = false;
+                  setSignInError(null);
+                }}
+                className="mt-1 px-5 py-2.25 bg-(--orange) text-white text-[13px] font-medium rounded-[8px] hover:opacity-90 transition-opacity duration-150"
+              >
+                Try again
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-16 h-16 rounded-2xl bg-sidebar border border-(--border-med) flex items-center justify-center">
+                <Wallet size={26} className="text-(--orange)" strokeWidth={1.6} />
+              </div>
+              <div>
+                <h2 className="font-head text-[20px] font-bold tracking-[-0.2px] mb-1.5">
+                  Confirm signature
+                </h2>
+                <p className="text-[13px] text-muted-foreground font-light leading-[1.65] max-w-[260px]">
+                  Check your wallet — a signature request is waiting for you.
+                </p>
+              </div>
+              <Loader2 size={18} className="text-(--orange) animate-spin mt-1" strokeWidth={1.8} />
+            </>
+          )}
         </div>
       </div>
     );
