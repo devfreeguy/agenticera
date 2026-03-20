@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAccount } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { ChevronLeft, ChevronDown, Lock, Wallet } from "lucide-react";
+import { ChevronLeft, ChevronDown, Lock, Wallet, Loader2 } from "lucide-react";
 import { LogoMark } from "@/components/shared/LogoMark";
 import { BRAND_NAME } from "@/constants/brand";
 import { cn } from "@/lib/utils";
@@ -54,8 +54,42 @@ function AuthPageInner() {
     }
   }, [isConnected, address, user, hydrated, signIn, router]);
 
-  // Render nothing while redirect is in progress
-  if (isConnected) return null;
+  // While connected and waiting for signature (or redirecting), show overlay
+  if (isConnected && !signInError) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-6">
+        <div
+          className="fixed inset-0 pointer-events-none z-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
+        <div
+          className="fixed -top-30 left-1/2 -translate-x-1/2 w-175 h-105 pointer-events-none z-0"
+          style={{
+            background:
+              "radial-gradient(ellipse at center top, rgba(232,121,58,0.13) 0%, transparent 65%)",
+          }}
+        />
+        <div className="relative z-10 flex flex-col items-center gap-5 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-sidebar border border-(--border-med) flex items-center justify-center">
+            <Wallet size={26} className="text-(--orange)" strokeWidth={1.6} />
+          </div>
+          <div>
+            <h2 className="font-head text-[20px] font-bold tracking-[-0.2px] mb-1.5">
+              Confirm signature
+            </h2>
+            <p className="text-[13px] text-muted-foreground font-light leading-[1.65] max-w-[260px]">
+              Check your wallet — a signature request is waiting for you.
+            </p>
+          </div>
+          <Loader2 size={18} className="text-(--orange) animate-spin mt-1" strokeWidth={1.8} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-background flex flex-col">

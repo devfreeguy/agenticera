@@ -1,12 +1,33 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { executeJob } from "@/lib/agent-runtime";
+import { getUserByWallet } from "@/lib/db/users";
+import { getCurrentSession } from "@/lib/session";
 import { createPublicClient, http } from "viem";
 import { base } from "viem/chains";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const sessionWallet = await getCurrentSession();
+  if (!sessionWallet) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const sessionUser = await getUserByWallet(sessionWallet);
+  if (!sessionUser) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { jobId, txHash } = await req.json();
+
+    // Verify the session user is the job's client
+    const job = await prisma.job.findUnique({ where: { id: jobId }, select: { clientId: true } });
+    if (!job) {
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    }
+    if (job.clientId !== sessionUser.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const rpcUrl = process.env.BASE_RPC_URL;
     if (!rpcUrl) throw new Error("BASE_RPC_URL is missing in .env");

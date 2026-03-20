@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJobById } from "@/lib/db/jobs";
+import { getUserByWallet } from "@/lib/db/users";
+import { getCurrentSession } from "@/lib/session";
 import { pollForPayment } from "@/lib/indexer";
 import { prisma } from "@/lib/prisma";
 import { JobStatus, TransactionType } from "@/generated/prisma/enums";
@@ -21,6 +23,16 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiSuccess<CheckPaymentResponse> | ApiError>> {
+  const sessionWallet = await getCurrentSession();
+  if (!sessionWallet) {
+    return NextResponse.json<ApiError>({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const sessionUser = await getUserByWallet(sessionWallet);
+  if (!sessionUser) {
+    return NextResponse.json<ApiError>({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   // Optional txHash from wagmi-confirmed transaction
@@ -41,6 +53,10 @@ export async function POST(
       return NextResponse.json<ApiError>({ error: "Job not found" }, { status: 404 });
     }
     console.log("[check-payment] job status:", job.status);
+
+    if (job.clientId !== sessionUser.id) {
+      return NextResponse.json<ApiError>({ error: "Forbidden" }, { status: 403 });
+    }
 
     if (ALREADY_PAID_STATUSES.has(job.status) || job.status === JobStatus.FAILED) {
       console.log("[check-payment] already confirmed, status:", job.status);

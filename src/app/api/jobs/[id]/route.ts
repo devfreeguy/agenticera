@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getJobById } from "@/lib/db/jobs";
+import { getUserByWallet } from "@/lib/db/users";
+import { getCurrentSession } from "@/lib/session";
 import { serializeJob } from "@/utils/serialize";
 import { prisma } from "@/lib/prisma";
 import { JobStatus } from "@/generated/prisma/enums";
@@ -34,6 +36,16 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiSuccess<JobWithRelations> | ApiError>> {
+  const sessionWallet = await getCurrentSession();
+  if (!sessionWallet) {
+    return NextResponse.json<ApiError>({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const sessionUser = await getUserByWallet(sessionWallet);
+  if (!sessionUser) {
+    return NextResponse.json<ApiError>({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   let body: { status?: string };
@@ -52,6 +64,13 @@ export async function PATCH(
     if (!job) {
       return NextResponse.json<ApiError>({ error: "Job not found" }, { status: 404 });
     }
+
+    const isClient = job.clientId === sessionUser.id;
+    const isAgentOwner = job.agent.ownerId === sessionUser.id;
+    if (!isClient && !isAgentOwner) {
+      return NextResponse.json<ApiError>({ error: "Forbidden" }, { status: 403 });
+    }
+
     if (job.status !== JobStatus.FAILED) {
       return NextResponse.json<ApiError>({ error: "Job is not in FAILED state" }, { status: 400 });
     }

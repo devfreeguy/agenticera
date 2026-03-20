@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAgentWallet } from "@/lib/wdk";
 import { createAgent, getActiveAgents } from "@/lib/db/agents";
+import { getUserByWallet } from "@/lib/db/users";
+import { getCurrentSession } from "@/lib/session";
 import { createAgentSchema } from "@/lib/validations/agentSchema";
 import { serializeAgent } from "@/utils/serialize";
 import type { AgentPublic, ApiError, ApiSuccess } from "@/types/index";
@@ -8,6 +10,22 @@ import type { AgentPublic, ApiError, ApiSuccess } from "@/types/index";
 export async function POST(
   req: NextRequest,
 ): Promise<NextResponse<ApiSuccess<AgentPublic> | ApiError>> {
+  const sessionWallet = await getCurrentSession();
+  if (!sessionWallet) {
+    return NextResponse.json<ApiError>(
+      { error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
+  const sessionUser = await getUserByWallet(sessionWallet);
+  if (!sessionUser) {
+    return NextResponse.json<ApiError>(
+      { error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -29,7 +47,7 @@ export async function POST(
   try {
     const { address, encryptedSeed } = await createAgentWallet();
     const agent = await createAgent({
-      ownerId: parsed.data.ownerId,
+      ownerId: sessionUser.id,
       name: parsed.data.name,
       systemPrompt: parsed.data.systemPrompt,
       pricePerTask: String(parsed.data.pricePerTask),

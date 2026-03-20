@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createAgentSchema = z.object({
-  ownerId: z.string().min(1, "ownerId is required"),
+  ownerId: z.string().optional(),
   name: z.string().min(1, "name is required").max(50, "name must be 50 characters or fewer"),
   systemPrompt: z
     .string()

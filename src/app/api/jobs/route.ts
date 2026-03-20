@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAgentById } from "@/lib/db/agents";
 import { createJob, getJobsByClient } from "@/lib/db/jobs";
 import { getUserByWallet } from "@/lib/db/users";
+import { getCurrentSession } from "@/lib/session";
 import { createJobSchema } from "@/lib/validations/jobSchema";
 import { AgentStatus } from "@/generated/prisma/enums";
 import { serializeJob } from "@/utils/serialize";
@@ -24,6 +25,22 @@ type CreateJobResponse = {
 export async function POST(
   req: NextRequest,
 ): Promise<NextResponse<ApiSuccess<CreateJobResponse> | ApiError>> {
+  const sessionWallet = await getCurrentSession();
+  if (!sessionWallet) {
+    return NextResponse.json<ApiError>(
+      { error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
+  const sessionUser = await getUserByWallet(sessionWallet);
+  if (!sessionUser) {
+    return NextResponse.json<ApiError>(
+      { error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -42,7 +59,7 @@ export async function POST(
     );
   }
 
-  const { clientId, agentId, taskDescription } = parsed.data;
+  const { agentId, taskDescription } = parsed.data;
   console.log("[jobs:create] creating job for agent:", agentId);
 
   try {
@@ -65,7 +82,7 @@ export async function POST(
     );
 
     const job = await createJob({
-      clientId,
+      clientId: sessionUser.id,
       agentId,
       taskDescription,
       priceUsdt: agent.pricePerTask.toString(),
@@ -93,16 +110,16 @@ export async function POST(
 export async function GET(
   req: NextRequest,
 ): Promise<NextResponse<ApiSuccess<JobWithRelations[]> | ApiError>> {
-  const walletAddress = req.nextUrl.searchParams.get("walletAddress");
-  if (!walletAddress) {
+  const sessionWallet = await getCurrentSession();
+  if (!sessionWallet) {
     return NextResponse.json<ApiError>(
-      { error: "walletAddress query param is required" },
-      { status: 400 },
+      { error: "Unauthorized" },
+      { status: 401 },
     );
   }
 
   try {
-    const user = await getUserByWallet(walletAddress);
+    const user = await getUserByWallet(sessionWallet);
     if (!user) {
       return NextResponse.json<ApiError>(
         { error: "User not found" },
@@ -115,7 +132,7 @@ export async function GET(
       data: jobs.map(serializeJob),
     });
   } catch (error) {
-    console.error("[GET /api/jobs] Failed to fetch jobs for wallet:", walletAddress, error instanceof Error ? error.message : error);
+    console.error("[GET /api/jobs] Failed to fetch jobs for session wallet:", sessionWallet, error instanceof Error ? error.message : error);
     return NextResponse.json<ApiError>(
       {
         error: error instanceof Error ? error.message : "Internal server error",

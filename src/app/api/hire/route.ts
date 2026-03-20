@@ -1,16 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { evaluateJobQuote } from "@/lib/agent-runtime";
+import { getUserByWallet } from "@/lib/db/users";
+import { getCurrentSession } from "@/lib/session";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export async function POST(req: Request) {
-  let clientId: string, agentId: string, taskDescription: string, priceUsdt: number;
+export async function POST(req: NextRequest) {
+  const sessionWallet = await getCurrentSession();
+  if (!sessionWallet) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const sessionUser = await getUserByWallet(sessionWallet);
+  if (!sessionUser) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let agentId: string, taskDescription: string, priceUsdt: number;
 
   // Step 0: Parse body
   try {
     const body = await req.json();
-    clientId = body.clientId;
     agentId = body.agentId;
     taskDescription = body.taskDescription;
     priceUsdt = parseFloat(body.priceUsdt?.toString());
@@ -47,7 +58,7 @@ export async function POST(req: Request) {
     try {
       job = await prisma.job.create({
         data: {
-          clientId,
+          clientId: sessionUser.id,
           agentId,
           taskDescription,
           priceUsdt: priceUsdt.toString(),

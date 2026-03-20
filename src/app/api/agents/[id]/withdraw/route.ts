@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAgentById } from "@/lib/db/agents";
+import { getUserByWallet } from "@/lib/db/users";
+import { getCurrentSession } from "@/lib/session";
 import { getAgentBalance, sendUsdt } from "@/lib/wdk";
 import { createTransaction } from "@/lib/db/transactions";
 import { withdrawSchema } from "@/lib/validations/agentSchema";
@@ -12,6 +14,16 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse<ApiSuccess<WithdrawResponse> | ApiError>> {
+  const sessionWallet = await getCurrentSession();
+  if (!sessionWallet) {
+    return NextResponse.json<ApiError>({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const sessionUser = await getUserByWallet(sessionWallet);
+  if (!sessionUser) {
+    return NextResponse.json<ApiError>({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   let body: unknown;
@@ -35,6 +47,10 @@ export async function POST(
     const agent = await getAgentById(id);
     if (!agent) {
       return NextResponse.json<ApiError>({ error: "Agent not found" }, { status: 404 });
+    }
+
+    if (agent.ownerId !== sessionUser.id) {
+      return NextResponse.json<ApiError>({ error: "Forbidden" }, { status: 403 });
     }
 
     // Check balance — handle network failures separately

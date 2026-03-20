@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createJobSchema = z.object({
-  clientId: z.string().min(1, "clientId is required"),
+  clientId: z.string().optional(),
   agentId: z.string().min(1, "agentId is required"),
   taskDescription: z
     .string()
