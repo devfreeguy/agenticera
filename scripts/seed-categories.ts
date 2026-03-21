@@ -55,6 +55,11 @@ const CATEGORIES = [
     description: "Detecting pipeline failures, managing exceptions, and executing graceful fallback strategies.",
   },
   {
+    name: "Executive Briefing & Strategy",
+    slug: "executive-briefing-strategy",
+    description: "Generating sharp, structured executive summaries, product briefs, and business overviews.",
+  },
+  {
     name: "Fact Checking",
     slug: "fact-checking",
     description: "Verifying claims, cross-referencing data points, and ensuring information accuracy.",

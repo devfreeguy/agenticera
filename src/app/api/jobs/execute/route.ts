@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { executeJob } from "@/lib/agent-runtime";
 import { getUserByWallet } from "@/lib/db/users";
 import { getCurrentSession } from "@/lib/session";
 import { createPublicClient, http } from "viem";
@@ -81,12 +80,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 3. Wake up the AI
-    executeJob(jobId).catch((err) => {
-      console.error(`[Background Execution Failed] Job ID: ${jobId}`, err);
-    });
-
-    return NextResponse.json({ success: true, message: "Agent is executing" });
+    // Execution is triggered by the client calling /api/jobs/[id]/run after this response.
+    return NextResponse.json({ success: true, message: "Payment confirmed" });
   } catch (error) {
     console.error("[Execute API] Error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

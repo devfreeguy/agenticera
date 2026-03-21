@@ -13,6 +13,7 @@ const POLL_TIMEOUT_MS = 5 * 60 * 1000;
 interface PollEntry {
   interval: ReturnType<typeof setInterval>;
   startedAt: number;
+  isProcessing: boolean;
 }
 
 interface PollCallbacks {
@@ -25,13 +26,14 @@ const callbacks = new Map<string, PollCallbacks>();
 
 async function tick(jobId: string) {
   const entry = polls.get(jobId);
-  if (!entry) return;
+  if (!entry || entry.isProcessing) return;
 
   if (Date.now() - entry.startedAt > POLL_TIMEOUT_MS) {
     stopJobPoll(jobId);
     return;
   }
 
+  entry.isProcessing = true;
   try {
     const res = await axiosClient.get<{ data: JobWithRelations }>(`/api/jobs/${jobId}`);
     const job = res.data?.data;
@@ -76,6 +78,10 @@ async function tick(jobId: string) {
     }
   } catch {
     // transient network error — keep polling
+  } finally {
+    // Only reset if poll wasn't stopped during processing
+    const current = polls.get(jobId);
+    if (current) current.isProcessing = false;
   }
 }
 
@@ -83,7 +89,7 @@ export function startJobPoll(jobId: string) {
   if (polls.has(jobId)) return; // already running
   // Register entry first so tick() doesn't bail on the immediate call
   const interval = setInterval(() => tick(jobId), POLL_INTERVAL_MS);
-  polls.set(jobId, { interval, startedAt: Date.now() });
+  polls.set(jobId, { interval, startedAt: Date.now(), isProcessing: false });
   tick(jobId);
 }
 

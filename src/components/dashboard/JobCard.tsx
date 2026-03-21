@@ -2,6 +2,50 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+
+function JsonOutput({ raw }: { raw: string }) {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return (
+      <pre className="font-mono text-[12px] leading-[1.6] whitespace-pre-wrap break-all text-muted-foreground">
+        {raw}
+      </pre>
+    );
+  }
+
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    return (
+      <dl className="space-y-3">
+        {Object.entries(parsed as Record<string, unknown>).map(([key, val]) => (
+          <div key={key}>
+            <dt className="text-[10px] text-(--hint) uppercase tracking-[.06em] font-medium mb-0.5">{key}</dt>
+            <dd className="text-[13px] text-foreground leading-[1.65]">{String(val)}</dd>
+          </div>
+        ))}
+      </dl>
+    );
+  }
+
+  if (Array.isArray(parsed)) {
+    return (
+      <ul className="space-y-1.5 list-disc list-inside">
+        {(parsed as unknown[]).map((item, i) => (
+          <li key={i} className="text-[13px] text-muted-foreground leading-[1.65]">
+            {typeof item === "object" ? JSON.stringify(item, null, 2) : String(item)}
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <pre className="font-mono text-[12px] leading-[1.6] whitespace-pre-wrap break-all text-muted-foreground">
+      {raw}
+    </pre>
+  );
+}
 import { Loader2, ExternalLink, RotateCcw, Banknote, Eye, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -288,9 +332,7 @@ export function JobCard({ job, isNew, onViewed, onResumeFlow }: JobCardProps) {
           <div className="bg-card border border-border rounded-[10px] p-4 max-h-90 overflow-y-auto">
             {job.output ? (
               job.output.trimStart().startsWith("{") || job.output.trimStart().startsWith("[") ? (
-                <pre className="font-mono text-[12px] text-muted-foreground leading-[1.6] whitespace-pre-wrap break-all">
-                  {job.output}
-                </pre>
+                <JsonOutput raw={job.output} />
               ) : (
                 <div className="prose prose-sm prose-invert max-w-none text-[13px] leading-[1.7] [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:text-muted-foreground [&_li]:text-muted-foreground [&_h1]:text-foreground [&_h2]:text-foreground [&_h3]:text-foreground [&_code]:bg-secondary [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-[11px] [&_pre]:bg-secondary [&_pre]:p-3 [&_pre]:rounded-[8px] [&_pre]:overflow-x-auto">
                   <ReactMarkdown>{job.output}</ReactMarkdown>
