@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, AlertCircle } from "lucide-react";
+import { ChevronLeft, AlertCircle, ChevronsUpDown, X, Check } from "lucide-react";
 import { isAxiosError } from "axios";
 import axiosClient from "@/lib/axiosClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { SectionTag } from "@/components/shared/SectionTag";
 import { DeployingState } from "@/components/onboarding/DeployingState";
 import { DeploySuccessState } from "@/components/onboarding/DeploySuccessState";
@@ -53,6 +55,8 @@ export function AgentSetupStep({
   const { categories, isLoading: isCategoriesLoading } = useCategories();
   const [subStep, setSubStep] = useState<SubStep>(1);
   const [view, setView] = useState<ViewState>("form");
+  const [catOpen, setCatOpen] = useState(false);
+  const [catSearch, setCatSearch] = useState("");
   const [deployedWallet, setDeployedWallet] = useState("");
   const [deployError, setDeployError] = useState("");
   const [form, setForm] = useState<FormData>({
@@ -270,38 +274,107 @@ export function AgentSetupStep({
               <label className="block text-[12px] font-medium text-muted-foreground uppercase tracking-[.05em] mb-1.75">
                 Task categories
               </label>
-              {isCategoriesLoading ? (
-                <div className="flex flex-wrap gap-2">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-8 rounded-full bg-secondary animate-pulse"
-                      style={{ width: `${64 + (i % 3) * 20}px` }}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((cat) => {
-                    const isSelected = form.categories.includes(cat.slug);
+
+              {/* Selected pills */}
+              {form.categories.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {form.categories.map((slug) => {
+                    const name = categories.find((c) => c.slug === slug)?.name ?? slug;
                     return (
-                      <button
-                        key={cat.slug}
-                        type="button"
-                        onClick={() => toggleCategory(cat.slug)}
-                        className={cn(
-                          "px-3.5 py-1.75 rounded-full border text-[12px] cursor-pointer transition-all duration-150 select-none",
-                          isSelected
-                            ? "bg-(--orange-dim) border-(--orange) text-(--orange) font-medium"
-                            : "bg-card border-(--border-med) text-muted-foreground hover:border-(--orange-border) hover:text-foreground",
-                        )}
+                      <span
+                        key={slug}
+                        className="inline-flex items-center gap-1 pl-2.5 pr-1.5 py-0.75 rounded-full bg-(--orange-dim) border border-(--orange) text-(--orange) text-[11px] font-medium"
                       >
-                        {cat.name}
-                      </button>
+                        {name}
+                        <button
+                          type="button"
+                          onClick={() => toggleCategory(slug)}
+                          className="ml-0.5 hover:opacity-70 transition-opacity"
+                        >
+                          <X size={10} strokeWidth={2.5} />
+                        </button>
+                      </span>
                     );
                   })}
                 </div>
               )}
+
+              <Popover open={catOpen} onOpenChange={setCatOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      "w-full flex items-center justify-between gap-2 px-3.5 py-2.5",
+                      "bg-background border border-input rounded-[8px]",
+                      "text-[13px] text-muted-foreground hover:border-(--orange-border) hover:text-foreground",
+                      "transition-colors duration-150 cursor-pointer",
+                      catOpen && "border-(--orange)",
+                    )}
+                  >
+                    <span>
+                      {isCategoriesLoading
+                        ? "Loading categories…"
+                        : form.categories.length === 0
+                          ? "Select categories…"
+                          : `${form.categories.length} selected`}
+                    </span>
+                    <ChevronsUpDown size={14} className="shrink-0 opacity-50" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-[var(--radix-popover-trigger-width)] p-0"
+                  align="start"
+                >
+                  {/* Search */}
+                  <div className="px-3 pt-3 pb-2 border-b border-border">
+                    <Input
+                      placeholder="Search categories…"
+                      value={catSearch}
+                      onChange={(e) => setCatSearch(e.target.value)}
+                      className="h-8 text-[13px]"
+                    />
+                  </div>
+
+                  {/* List */}
+                  <ScrollArea className="h-52">
+                  <div className="py-1.5">
+                    {categories
+                      .filter((c) =>
+                        c.name.toLowerCase().includes(catSearch.toLowerCase()),
+                      )
+                      .map((cat) => {
+                        const isSelected = form.categories.includes(cat.slug);
+                        return (
+                          <button
+                            key={cat.slug}
+                            type="button"
+                            onClick={() => toggleCategory(cat.slug)}
+                            className={cn(
+                              "w-full flex items-center justify-between gap-3 px-3 py-2",
+                              "text-[13px] cursor-pointer transition-colors duration-100",
+                              isSelected
+                                ? "text-(--orange) bg-(--orange-dim)"
+                                : "text-foreground hover:bg-secondary",
+                            )}
+                          >
+                            <span>{cat.name}</span>
+                            {isSelected && (
+                              <Check size={13} className="shrink-0" strokeWidth={2.5} />
+                            )}
+                          </button>
+                        );
+                      })}
+                    {categories.filter((c) =>
+                      c.name.toLowerCase().includes(catSearch.toLowerCase()),
+                    ).length === 0 && (
+                      <p className="px-3 py-3 text-[12px] text-muted-foreground text-center">
+                        No categories found
+                      </p>
+                    )}
+                  </div>
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="flex gap-2.5 mt-5">
